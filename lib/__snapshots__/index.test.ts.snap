@@ -1,0 +1,12 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`work fine 1`] = `
+Float32Array [
+  1,
+  4,
+  9,
+  16,
+  25,
+  36,
+]
+`;
