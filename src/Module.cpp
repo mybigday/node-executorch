@@ -8,52 +8,26 @@ namespace executorch::node {
 
 class LoadWorker : public Napi::AsyncWorker, public Napi::Promise::Deferred {
 public:
-  LoadWorker(Napi::Env env, const std::string& path)
-    : Napi::AsyncWorker(env), Napi::Promise::Deferred(env), path_(path) {}
+  LoadWorker(Napi::Env env, const std::string &path)
+      : Napi::AsyncWorker(env), Napi::Promise::Deferred(env), path_(path) {}
 
 protected:
   void Execute() {
     try {
-      auto *module = new torch::executor::Module(path_, torch::executor::Module::MlockConfig::NoMlock);
+      auto *module = new torch::executor::Module(
+          path_, torch::executor::Module::MlockConfig::NoMlock);
       module_ = std::make_unique<ModuleHolder>(module);
-      // { // load module
-      //   auto error = (*module_)->load();
-      //   if (error != torch::executor::Error::Ok) {
-      //     throw std::runtime_error("Failed to load module: " + errorString(error));
-      //   }
-      // }
-      // { // load all methods
-      //   auto result = (*module_)->method_names();
-      //   if (result.ok()) {
-      //     for (const auto& name : result.get()) {
-      //       auto error = (*module_)->load_method(name);
-      //       if (error != torch::executor::Error::Ok) {
-      //         throw std::runtime_error("Failed to load method \"" + name + "\": " + errorString(error));
-      //       }
-      //     }
-      //   } else {
-      //     throw std::runtime_error("Failed to get method names: " + errorString(result.error()));
-      //   }
-      // }
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       SetError(e.what());
     }
   }
 
   void OnOK() {
-    Resolve(
-      Module::New(
-        Napi::External<ModuleHolder>::New(
-          Napi::AsyncWorker::Env(),
-          module_.release()
-        )
-      )
-    );
+    Resolve(Module::New(Napi::External<ModuleHolder>::New(
+        Napi::AsyncWorker::Env(), module_.release())));
   }
 
-  void OnError(const Napi::Error& e) {
-    Reject(e.Value());
-  }
+  void OnError(const Napi::Error &e) { Reject(e.Value()); }
 
 private:
   const std::string path_;
@@ -63,16 +37,10 @@ private:
 /* ExecuteWorker */
 class ExecuteWorker : public Napi::AsyncWorker, public Napi::Promise::Deferred {
 public:
-  ExecuteWorker(
-    Napi::Env env,
-    ModuleHolder* module,
-    std::string method,
-    std::vector<torch::executor::EValue> inputs
-  ) : Napi::AsyncWorker(env),
-      Napi::Promise::Deferred(env),
-      module_(module),
-      method_(method),
-      inputs_(std::move(inputs)) {}
+  ExecuteWorker(Napi::Env env, ModuleHolder *module, std::string method,
+                std::vector<torch::executor::EValue> inputs)
+      : Napi::AsyncWorker(env), Napi::Promise::Deferred(env), module_(module),
+        method_(method), inputs_(std::move(inputs)) {}
 
 protected:
   void Execute() {
@@ -81,31 +49,32 @@ protected:
       if (result.ok()) {
         outputs_ = std::move(result.get());
       } else {
-        throw std::runtime_error("Failed to execute method: " + errorString(result.error()));
+        throw std::runtime_error("Failed to execute method: " +
+                                 errorString(result.error()));
       }
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       SetError(e.what());
     }
   }
 
   void OnOK() {
     try {
-      auto results = Napi::Array::New(Napi::AsyncWorker::Env(), outputs_.size());
+      auto results =
+          Napi::Array::New(Napi::AsyncWorker::Env(), outputs_.size());
       for (size_t i = 0; i < outputs_.size(); i++) {
-        results.Set(i, napiValueFromEValue(Napi::AsyncWorker::Env(), outputs_[i]));
+        results.Set(i,
+                    napiValueFromEValue(Napi::AsyncWorker::Env(), outputs_[i]));
       }
       Resolve(results);
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       Reject(Napi::Error::New(Napi::AsyncWorker::Env(), e.what()).Value());
     }
   }
 
-  void OnError(const Napi::Error& e) {
-    Reject(e.Value());
-  }
+  void OnError(const Napi::Error &e) { Reject(e.Value()); }
 
 private:
-  ModuleHolder* module_;
+  ModuleHolder *module_;
   const std::string method_;
   const std::vector<torch::executor::EValue> inputs_;
   std::vector<torch::executor::EValue> outputs_;
@@ -113,50 +82,45 @@ private:
 
 /* LoadMethodWorker */
 
-class LoadMethodWorker : public Napi::AsyncWorker, public Napi::Promise::Deferred {
+class LoadMethodWorker : public Napi::AsyncWorker,
+                         public Napi::Promise::Deferred {
 public:
-  LoadMethodWorker(
-    Napi::Env env,
-    ModuleHolder* module,
-    std::string method
-  ) : Napi::AsyncWorker(env),
-      Napi::Promise::Deferred(env),
-      module_(module),
-      method_(method) {}
+  LoadMethodWorker(Napi::Env env, ModuleHolder *module, std::string method)
+      : Napi::AsyncWorker(env), Napi::Promise::Deferred(env), module_(module),
+        method_(method) {}
 
 protected:
   void Execute() {
     try {
       auto error = (*module_)->load_method(method_);
       if (error != torch::executor::Error::Ok) {
-        throw std::runtime_error("Failed to load method: " + errorString(error));
+        throw std::runtime_error("Failed to load method: " +
+                                 errorString(error));
       }
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
       SetError(e.what());
     }
   }
 
-  void OnOK() {
-    Resolve(Napi::AsyncWorker::Env().Undefined());
-  }
+  void OnOK() { Resolve(Napi::AsyncWorker::Env().Undefined()); }
 
-  void OnError(const Napi::Error& e) {
-    Reject(e.Value());
-  }
+  void OnError(const Napi::Error &e) { Reject(e.Value()); }
 
 private:
-  ModuleHolder* module_;
+  ModuleHolder *module_;
   const std::string method_;
 };
 
 /* Module */
 
-Module::Module(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Module>(info) {
+Module::Module(const Napi::CallbackInfo &info)
+    : Napi::ObjectWrap<Module>(info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
   if (info.Length() < 1 || !info[0].IsExternal()) {
-    Napi::TypeError::New(env, "Expected an external").ThrowAsJavaScriptException();
+    Napi::TypeError::New(env, "Expected an external")
+        .ThrowAsJavaScriptException();
     return;
   }
 
@@ -164,20 +128,23 @@ Module::Module(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Module>(info) 
   module_.reset(std::move(module.Data()));
 }
 
-Napi::Value Module::Execute(const Napi::CallbackInfo& info) {
+Napi::Value Module::Execute(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
   if (info.Length() < 2) {
-    Napi::TypeError::New(env, "Expected method name and input array").ThrowAsJavaScriptException();
+    Napi::TypeError::New(env, "Expected method name and input array")
+        .ThrowAsJavaScriptException();
     return env.Undefined();
   }
   if (!info[1].IsString()) {
-    Napi::TypeError::New(env, "Expected method name").ThrowAsJavaScriptException();
+    Napi::TypeError::New(env, "Expected method name")
+        .ThrowAsJavaScriptException();
     return env.Undefined();
   }
   if (!info[0].IsArray()) {
-    Napi::TypeError::New(env, "Expected input array").ThrowAsJavaScriptException();
+    Napi::TypeError::New(env, "Expected input array")
+        .ThrowAsJavaScriptException();
     return env.Undefined();
   }
 
@@ -194,7 +161,7 @@ Napi::Value Module::Execute(const Napi::CallbackInfo& info) {
   return worker->Promise();
 }
 
-Napi::Value Module::Load(const Napi::CallbackInfo& info) {
+Napi::Value Module::Load(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -209,7 +176,7 @@ Napi::Value Module::Load(const Napi::CallbackInfo& info) {
   return worker->Promise();
 }
 
-Napi::Value Module::LoadMethod(const Napi::CallbackInfo& info) {
+Napi::Value Module::LoadMethod(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -229,12 +196,13 @@ Napi::Value Module::LoadMethod(const Napi::CallbackInfo& info) {
   return worker->Promise();
 }
 
-Napi::Value Module::Forward(const Napi::CallbackInfo& info) {
+Napi::Value Module::Forward(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
   if (info.Length() < 1 || !info[0].IsArray()) {
-    Napi::TypeError::New(env, "Expected input array").ThrowAsJavaScriptException();
+    Napi::TypeError::New(env, "Expected input array")
+        .ThrowAsJavaScriptException();
     return env.Undefined();
   }
 
@@ -249,7 +217,7 @@ Napi::Value Module::Forward(const Napi::CallbackInfo& info) {
   return worker->Promise();
 }
 
-Napi::Value Module::MethodNames(const Napi::CallbackInfo& info) {
+Napi::Value Module::MethodNames(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -258,24 +226,26 @@ Napi::Value Module::MethodNames(const Napi::CallbackInfo& info) {
     auto names = result.get();
     auto js_results = Napi::Array::New(env, names.size());
     size_t i = 0;
-    for (const auto& name : names) {
+    for (const auto &name : names) {
       js_results.Set(i++, Napi::String::New(env, name));
     }
     return js_results;
   } else {
-    Napi::Error::New(env, "Failed to get method names: " + errorString(result.error())).ThrowAsJavaScriptException();
+    Napi::Error::New(env, "Failed to get method names: " +
+                              errorString(result.error()))
+        .ThrowAsJavaScriptException();
     return env.Undefined();
   }
 }
 
 Napi::Object Module::Init(Napi::Env env, Napi::Object exports) {
-  Napi::Function func = DefineClass(env, "Module", {
-    StaticMethod("load", &Module::Load),
-    InstanceAccessor("method_names", &Module::MethodNames, nullptr),
-    InstanceMethod("loadMethod", &Module::LoadMethod),
-    InstanceMethod("forward", &Module::Forward),
-    InstanceMethod("execute", &Module::Execute)
-  });
+  Napi::Function func = DefineClass(
+      env, "Module",
+      {StaticMethod("load", &Module::Load),
+       InstanceAccessor("method_names", &Module::MethodNames, nullptr),
+       InstanceMethod("loadMethod", &Module::LoadMethod),
+       InstanceMethod("forward", &Module::Forward),
+       InstanceMethod("execute", &Module::Execute)});
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
@@ -286,4 +256,4 @@ Napi::Object Module::Init(Napi::Env env, Napi::Object exports) {
 
 Napi::FunctionReference Module::constructor;
 
-}
+} // namespace executorch::node

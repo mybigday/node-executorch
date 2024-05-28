@@ -6,15 +6,14 @@
 namespace executorch::node {
 
 const std::unordered_map<std::string, exec_aten::ScalarType> dtypeMap = {
-  {"uint8", exec_aten::ScalarType::Byte},
-  {"int8", exec_aten::ScalarType::Char},
-  {"int16", exec_aten::ScalarType::Short},
-  {"int32", exec_aten::ScalarType::Int},
-  {"int64", exec_aten::ScalarType::Long},
-  {"float32", exec_aten::ScalarType::Float},
-  {"float64", exec_aten::ScalarType::Double},
-  {"bool", exec_aten::ScalarType::Bool}
-};
+    {"uint8", exec_aten::ScalarType::Byte},
+    {"int8", exec_aten::ScalarType::Char},
+    {"int16", exec_aten::ScalarType::Short},
+    {"int32", exec_aten::ScalarType::Int},
+    {"int64", exec_aten::ScalarType::Long},
+    {"float32", exec_aten::ScalarType::Float},
+    {"float64", exec_aten::ScalarType::Double},
+    {"bool", exec_aten::ScalarType::Bool}};
 
 exec_aten::ScalarType getType(std::string dtype) {
   auto it = dtypeMap.find(dtype);
@@ -33,7 +32,7 @@ std::string getTypeName(exec_aten::ScalarType type) {
   throw std::runtime_error("Unsupported dtype");
 }
 
-void* getData(const Napi::Value &value) {
+void *getData(const Napi::Value &value) {
   if (value.IsBuffer()) {
     Napi::Buffer<uint8_t> buffer = value.As<Napi::Buffer<uint8_t>>();
     return buffer.Data();
@@ -45,7 +44,8 @@ void* getData(const Napi::Value &value) {
   }
 }
 
-Tensor::Tensor(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Tensor>(info) {
+Tensor::Tensor(const Napi::CallbackInfo &info)
+    : Napi::ObjectWrap<Tensor>(info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -54,7 +54,8 @@ Tensor::Tensor(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Tensor>(info) 
   }
 
   if (info.Length() < 3) {
-    Napi::TypeError::New(env, "Expected 3 arguments").ThrowAsJavaScriptException();
+    Napi::TypeError::New(env, "Expected 3 arguments")
+        .ThrowAsJavaScriptException();
     return;
   }
   if (!info[0].IsString()) {
@@ -70,7 +71,7 @@ Tensor::Tensor(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Tensor>(info) 
 
   Napi::Array jsDims = info[1].As<Napi::Array>();
   size_t rank = jsDims.Length();
-  exec_aten::SizesType* dims = new exec_aten::SizesType[rank];
+  exec_aten::SizesType *dims = new exec_aten::SizesType[rank];
   for (size_t i = 0; i < rank; i++) {
     Napi::Value value = jsDims.Get(i);
     if (!value.IsNumber()) {
@@ -81,9 +82,8 @@ Tensor::Tensor(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Tensor>(info) 
   }
 
   try {
-    tensor_ = std::make_unique<exec_aten::Tensor>(
-      new exec_aten::TensorImpl(getType(dtype), rank, dims, getData(info[2]))
-    );
+    tensor_ = std::make_unique<exec_aten::Tensor>(new exec_aten::TensorImpl(
+        getType(dtype), rank, dims, getData(info[2])));
   } catch (std::exception &e) {
     Napi::Error::New(env, e.what()).ThrowAsJavaScriptException();
   }
@@ -92,7 +92,8 @@ Tensor::Tensor(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Tensor>(info) 
 size_t getSlicePos(Napi::Value val, size_t dimSize, size_t default_value) {
   if (val.IsNumber()) {
     auto num = val.ToNumber().Int32Value();
-    if (num < 0) num += dimSize;
+    if (num < 0)
+      num += dimSize;
     if (num < 0 || num >= dimSize) {
       throw std::runtime_error("Index out of range");
     }
@@ -102,7 +103,7 @@ size_t getSlicePos(Napi::Value val, size_t dimSize, size_t default_value) {
   }
 }
 
-Napi::Value Tensor::Shape(const Napi::CallbackInfo& info) {
+Napi::Value Tensor::Shape(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -114,71 +115,71 @@ Napi::Value Tensor::Shape(const Napi::CallbackInfo& info) {
   return shape;
 }
 
-Napi::Value Tensor::Dtype(const Napi::CallbackInfo& info) {
+Napi::Value Tensor::Dtype(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
   return Napi::String::New(env, getTypeName(tensor_->scalar_type()));
 }
 
-Napi::Value Tensor::GetData(const Napi::CallbackInfo& info) {
+Napi::Value Tensor::GetData(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
   size_t size = tensor_->nbytes();
   size_t n_elem = tensor_->numel();
   const void *data = tensor_->const_data_ptr();
-  
+
   switch (tensor_->scalar_type()) {
-    case exec_aten::ScalarType::Byte: {
-      Napi::Uint8Array array = Napi::Uint8Array::New(env, n_elem);
-      memcpy(array.Data(), data, size);
-      return array;
-    } break;
-    case exec_aten::ScalarType::Char: {
-      Napi::Int8Array array = Napi::Int8Array::New(env, n_elem);
-      memcpy(array.Data(), data, size);
-      return array;
-    } break;
-    case exec_aten::ScalarType::Short: {
-      Napi::Int16Array array = Napi::Int16Array::New(env, n_elem);
-      memcpy(array.Data(), data, size);
-      return array;
-    } break;
-    case exec_aten::ScalarType::Int: {
-      Napi::Int32Array array = Napi::Int32Array::New(env, n_elem);
-      memcpy(array.Data(), data, size);
-      return array;
-    } break;
-    case exec_aten::ScalarType::Long: {
-      Napi::BigInt64Array array = Napi::BigInt64Array::New(env, n_elem);
-      memcpy(array.Data(), data, size);
-      return array;
+  case exec_aten::ScalarType::Byte: {
+    Napi::Uint8Array array = Napi::Uint8Array::New(env, n_elem);
+    memcpy(array.Data(), data, size);
+    return array;
+  } break;
+  case exec_aten::ScalarType::Char: {
+    Napi::Int8Array array = Napi::Int8Array::New(env, n_elem);
+    memcpy(array.Data(), data, size);
+    return array;
+  } break;
+  case exec_aten::ScalarType::Short: {
+    Napi::Int16Array array = Napi::Int16Array::New(env, n_elem);
+    memcpy(array.Data(), data, size);
+    return array;
+  } break;
+  case exec_aten::ScalarType::Int: {
+    Napi::Int32Array array = Napi::Int32Array::New(env, n_elem);
+    memcpy(array.Data(), data, size);
+    return array;
+  } break;
+  case exec_aten::ScalarType::Long: {
+    Napi::BigInt64Array array = Napi::BigInt64Array::New(env, n_elem);
+    memcpy(array.Data(), data, size);
+    return array;
+  }
+  case exec_aten::ScalarType::Float: {
+    Napi::Float32Array array = Napi::Float32Array::New(env, n_elem);
+    memcpy(array.Data(), data, size);
+    return array;
+  } break;
+  case exec_aten::ScalarType::Double: {
+    Napi::Float64Array array = Napi::Float64Array::New(env, n_elem);
+    memcpy(array.Data(), data, size);
+    return array;
+  } break;
+  case exec_aten::ScalarType::Bool: {
+    Napi::Array array = Napi::Array::New(env, n_elem);
+    auto boolData = static_cast<const bool *>(data);
+    for (size_t i = 0; i < n_elem; i++) {
+      array.Set(i, Napi::Boolean::New(env, boolData[i]));
     }
-    case exec_aten::ScalarType::Float: {
-      Napi::Float32Array array = Napi::Float32Array::New(env, n_elem);
-      memcpy(array.Data(), data, size);
-      return array;
-    } break;
-    case exec_aten::ScalarType::Double: {
-      Napi::Float64Array array = Napi::Float64Array::New(env, n_elem);
-      memcpy(array.Data(), data, size);
-      return array;
-    } break;
-    case exec_aten::ScalarType::Bool: {
-      Napi::Array array = Napi::Array::New(env, n_elem);
-      auto boolData = static_cast<const bool*>(data);
-      for (size_t i = 0; i < n_elem; i++) {
-        array.Set(i, Napi::Boolean::New(env, boolData[i]));
-      }
-      return array;
-    } break;
-    default:
-      throw std::runtime_error("Unsupported dtype");
+    return array;
+  } break;
+  default:
+    throw std::runtime_error("Unsupported dtype");
   }
 }
 
-void Tensor::SetData(const Napi::CallbackInfo& info, const Napi::Value &value) {
+void Tensor::SetData(const Napi::CallbackInfo &info, const Napi::Value &value) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -186,12 +187,13 @@ void Tensor::SetData(const Napi::CallbackInfo& info, const Napi::Value &value) {
   memcpy(tensor_->mutable_data_ptr(), data, tensor_->nbytes());
 }
 
-void Tensor::SetIndex(const Napi::CallbackInfo& info) {
+void Tensor::SetIndex(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
   if (info.Length() < 2) {
-    Napi::TypeError::New(env, "Expected 2 arguments").ThrowAsJavaScriptException();
+    Napi::TypeError::New(env, "Expected 2 arguments")
+        .ThrowAsJavaScriptException();
     return;
   }
   if (!info[0].IsArray()) {
@@ -199,7 +201,8 @@ void Tensor::SetIndex(const Napi::CallbackInfo& info) {
     return;
   }
   if (!info[1].IsNumber() && !info[1].IsBoolean()) {
-    Napi::TypeError::New(env, "Expected number, string or boolean").ThrowAsJavaScriptException();
+    Napi::TypeError::New(env, "Expected number, string or boolean")
+        .ThrowAsJavaScriptException();
     return;
   }
 
@@ -223,36 +226,39 @@ void Tensor::SetIndex(const Napi::CallbackInfo& info) {
 
   void *data = tensor_->mutable_data_ptr();
   switch (tensor_->scalar_type()) {
-    case exec_aten::ScalarType::Byte:
-      reinterpret_cast<uint8_t*>(data)[pos] = (uint8_t)info[1].ToNumber().Int32Value();
-      break;
-    case exec_aten::ScalarType::Char:
-      reinterpret_cast<int8_t*>(data)[pos] = (int8_t)info[1].ToNumber().Int32Value();
-      break;
-    case exec_aten::ScalarType::Short:
-      reinterpret_cast<int16_t*>(data)[pos] = (int16_t)info[1].ToNumber().Int32Value();
-      break;
-    case exec_aten::ScalarType::Int:
-      reinterpret_cast<int32_t*>(data)[pos] = info[1].ToNumber().Int32Value();
-      break;
-    case exec_aten::ScalarType::Long:
-      reinterpret_cast<int64_t*>(data)[pos] = info[1].ToNumber().Int64Value();
-      break;
-    case exec_aten::ScalarType::Float:
-      reinterpret_cast<float*>(data)[pos] = info[1].ToNumber().FloatValue();
-      break;
-    case exec_aten::ScalarType::Double:
-      reinterpret_cast<double*>(data)[pos] = info[1].ToNumber().DoubleValue();
-      break;
-    case exec_aten::ScalarType::Bool:
-      reinterpret_cast<bool*>(data)[pos] = info[1].ToBoolean().Value();
-      break;
-    default:
-      throw std::runtime_error("Unsupported dtype");
+  case exec_aten::ScalarType::Byte:
+    reinterpret_cast<uint8_t *>(data)[pos] =
+        (uint8_t)info[1].ToNumber().Int32Value();
+    break;
+  case exec_aten::ScalarType::Char:
+    reinterpret_cast<int8_t *>(data)[pos] =
+        (int8_t)info[1].ToNumber().Int32Value();
+    break;
+  case exec_aten::ScalarType::Short:
+    reinterpret_cast<int16_t *>(data)[pos] =
+        (int16_t)info[1].ToNumber().Int32Value();
+    break;
+  case exec_aten::ScalarType::Int:
+    reinterpret_cast<int32_t *>(data)[pos] = info[1].ToNumber().Int32Value();
+    break;
+  case exec_aten::ScalarType::Long:
+    reinterpret_cast<int64_t *>(data)[pos] = info[1].ToNumber().Int64Value();
+    break;
+  case exec_aten::ScalarType::Float:
+    reinterpret_cast<float *>(data)[pos] = info[1].ToNumber().FloatValue();
+    break;
+  case exec_aten::ScalarType::Double:
+    reinterpret_cast<double *>(data)[pos] = info[1].ToNumber().DoubleValue();
+    break;
+  case exec_aten::ScalarType::Bool:
+    reinterpret_cast<bool *>(data)[pos] = info[1].ToBoolean().Value();
+    break;
+  default:
+    throw std::runtime_error("Unsupported dtype");
   }
 }
 
-Napi::Value Tensor::Slice(const Napi::CallbackInfo& info) {
+Napi::Value Tensor::Slice(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -278,11 +284,13 @@ Napi::Value Tensor::Slice(const Napi::CallbackInfo& info) {
     if (sliceDim.IsArray()) {
       Napi::Array dim = sliceDim.As<Napi::Array>();
       if (dim.Length() != 2) {
-        Napi::TypeError::New(env, "Invalid position").ThrowAsJavaScriptException();
+        Napi::TypeError::New(env, "Invalid position")
+            .ThrowAsJavaScriptException();
         return env.Undefined();
       }
       startVec[i] = getSlicePos(dim.Get(Napi::Number::New(env, 0)), dimSize, 0);
-      endVec[i] = getSlicePos(dim.Get(Napi::Number::New(env, 1)), dimSize, dimSize);
+      endVec[i] =
+          getSlicePos(dim.Get(Napi::Number::New(env, 1)), dimSize, dimSize);
     } else {
       startVec[i] = 0;
       endVec[i] = dimSize;
@@ -305,18 +313,21 @@ Napi::Value Tensor::Slice(const Napi::CallbackInfo& info) {
       pos /= dim_size;
       offset += (startVec[j] + dim_pos) * stride;
     }
-    memcpy(reinterpret_cast<uint8_t*>(newData) + i * elem_size, reinterpret_cast<const uint8_t*>(data) + offset * elem_size, elem_size);
+    memcpy(reinterpret_cast<uint8_t *>(newData) + i * elem_size,
+           reinterpret_cast<const uint8_t *>(data) + offset * elem_size,
+           elem_size);
   }
 
   auto dims = new exec_aten::SizesType[rank];
   for (size_t i = 0; i < rank; i++) {
     dims[i] = endVec[i] - startVec[i];
   }
-  exec_aten::Tensor tensor(new exec_aten::TensorImpl(tensor_->scalar_type(), rank, dims, newData));
+  exec_aten::Tensor tensor(
+      new exec_aten::TensorImpl(tensor_->scalar_type(), rank, dims, newData));
   return Tensor::New(tensor);
 }
 
-Napi::Value Tensor::Concat(const Napi::CallbackInfo& info) {
+Napi::Value Tensor::Concat(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -332,12 +343,13 @@ Napi::Value Tensor::Concat(const Napi::CallbackInfo& info) {
   auto js_tensors = info[0].As<Napi::Array>();
   size_t n_tensors = js_tensors.Length();
   if (n_tensors == 0) {
-    Napi::TypeError::New(env, "Expected non-empty array").ThrowAsJavaScriptException();
+    Napi::TypeError::New(env, "Expected non-empty array")
+        .ThrowAsJavaScriptException();
     return env.Undefined();
   }
 
   size_t axis = info.Length() > 1 ? info[1].ToNumber().Int32Value() : 0;
-  std::vector<Tensor*> tensors(n_tensors);
+  std::vector<Tensor *> tensors(n_tensors);
   std::vector<size_t> sizes;
   size_t rank = 0;
   exec_aten::ScalarType dtype;
@@ -345,7 +357,9 @@ Napi::Value Tensor::Concat(const Napi::CallbackInfo& info) {
   for (size_t i = 0; i < n_tensors; i++) {
     auto item = js_tensors.Get(i);
     if (!Tensor::IsInstance(item)) {
-      Napi::TypeError::New(env, "Item " + std::to_string(i) + " is not a Tensor").ThrowAsJavaScriptException();
+      Napi::TypeError::New(env,
+                           "Item " + std::to_string(i) + " is not a Tensor")
+          .ThrowAsJavaScriptException();
       return env.Undefined();
     }
     auto tensor = Napi::ObjectWrap<Tensor>::Unwrap(item.As<Napi::Object>());
@@ -362,10 +376,12 @@ Napi::Value Tensor::Concat(const Napi::CallbackInfo& info) {
         return env.Undefined();
       }
     } else if (dtype != tensor->tensor_->scalar_type()) {
-      Napi::TypeError::New(env, "Tensors have different dtypes").ThrowAsJavaScriptException();
+      Napi::TypeError::New(env, "Tensors have different dtypes")
+          .ThrowAsJavaScriptException();
       return env.Undefined();
     } else if (rank != tensor->tensor_->dim()) {
-      Napi::TypeError::New(env, "Tensors have different ranks").ThrowAsJavaScriptException();
+      Napi::TypeError::New(env, "Tensors have different ranks")
+          .ThrowAsJavaScriptException();
       return env.Undefined();
     } else {
       for (size_t j = 0; j < rank; j++) {
@@ -374,7 +390,8 @@ Napi::Value Tensor::Concat(const Napi::CallbackInfo& info) {
           continue;
         }
         if (sizes[j] != tensor->tensor_->size(j) && j != axis) {
-          Napi::TypeError::New(env, "Tensors have different sizes").ThrowAsJavaScriptException();
+          Napi::TypeError::New(env, "Tensors have different sizes")
+              .ThrowAsJavaScriptException();
           return env.Undefined();
         }
       }
@@ -400,12 +417,11 @@ Napi::Value Tensor::Concat(const Napi::CallbackInfo& info) {
 
   for (size_t i = 0; i < trip_step; i++) {
     for (size_t j = 0; j < n_tensors; j++) {
-      const void* data = tensors[j]->tensor_->const_data_ptr();
-      memcpy(
-        reinterpret_cast<uint8_t*>(newData) + j * chunk_size + i * n_tensors * chunk_size,
-        reinterpret_cast<const uint8_t*>(data) + chunk_size * i,
-        chunk_size
-      );
+      const void *data = tensors[j]->tensor_->const_data_ptr();
+      memcpy(reinterpret_cast<uint8_t *>(newData) + j * chunk_size +
+                 i * n_tensors * chunk_size,
+             reinterpret_cast<const uint8_t *>(data) + chunk_size * i,
+             chunk_size);
     }
   }
 
@@ -413,11 +429,12 @@ Napi::Value Tensor::Concat(const Napi::CallbackInfo& info) {
   for (size_t i = 0; i < rank; i++) {
     dims[i] = sizes[i];
   }
-  exec_aten::Tensor tensor(new exec_aten::TensorImpl(dtype, rank, dims, newData));
+  exec_aten::Tensor tensor(
+      new exec_aten::TensorImpl(dtype, rank, dims, newData));
   return Tensor::New(tensor);
 }
 
-Napi::Value Tensor::Reshape(const Napi::CallbackInfo& info) {
+Napi::Value Tensor::Reshape(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -428,7 +445,7 @@ Napi::Value Tensor::Reshape(const Napi::CallbackInfo& info) {
 
   auto jsDims = info[0].As<Napi::Array>();
   size_t rank = jsDims.Length();
-  exec_aten::SizesType* dims = new exec_aten::SizesType[rank];
+  exec_aten::SizesType *dims = new exec_aten::SizesType[rank];
   size_t n_elem = 1;
   for (size_t i = 0; i < rank; i++) {
     Napi::Value value = jsDims.Get(i);
@@ -445,20 +462,21 @@ Napi::Value Tensor::Reshape(const Napi::CallbackInfo& info) {
     return env.Undefined();
   }
 
-  exec_aten::Tensor tensor(new exec_aten::TensorImpl(tensor_->scalar_type(), rank, dims, tensor_->mutable_data_ptr()));
+  exec_aten::Tensor tensor(new exec_aten::TensorImpl(
+      tensor_->scalar_type(), rank, dims, tensor_->mutable_data_ptr()));
   return Tensor::New(tensor);
 }
 
 Napi::Object Tensor::Init(Napi::Env env, Napi::Object exports) {
-  Napi::Function func = DefineClass(env, "Tensor", {
-    StaticMethod("concat", &Tensor::Concat),
-    InstanceAccessor("shape", &Tensor::Shape, nullptr),
-    InstanceAccessor("dtype", &Tensor::Dtype, nullptr),
-    InstanceAccessor("data", &Tensor::GetData, &Tensor::SetData),
-    InstanceMethod("setIndex", &Tensor::SetIndex),
-    InstanceMethod("slice", &Tensor::Slice),
-    InstanceMethod("reshape", &Tensor::Reshape)
-  });
+  Napi::Function func =
+      DefineClass(env, "Tensor",
+                  {StaticMethod("concat", &Tensor::Concat),
+                   InstanceAccessor("shape", &Tensor::Shape, nullptr),
+                   InstanceAccessor("dtype", &Tensor::Dtype, nullptr),
+                   InstanceAccessor("data", &Tensor::GetData, &Tensor::SetData),
+                   InstanceMethod("setIndex", &Tensor::SetIndex),
+                   InstanceMethod("slice", &Tensor::Slice),
+                   InstanceMethod("reshape", &Tensor::Reshape)});
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();
@@ -469,4 +487,4 @@ Napi::Object Tensor::Init(Napi::Env env, Napi::Object exports) {
 
 Napi::FunctionReference Tensor::constructor;
 
-}
+} // namespace executorch::node
