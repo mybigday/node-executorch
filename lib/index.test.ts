@@ -14,4 +14,17 @@ it("work fine", async () => {
     expect(outputs[0].shape).toEqual([3, 2]);
     expect(outputs[0].data).toMatchSnapshot();
   }
+
+  const slice = input.slice([null, [1, null]]);
+  expect(slice.dtype).toBe("float32");
+  expect(slice.shape).toEqual([3, 1]);
+  expect(slice.data).toMatchSnapshot();
+
+  slice.setIndex([0, 0], 0);
+  expect(slice.data).toMatchSnapshot();
+
+  const concat = Tensor.concat([slice, slice], 1);
+  expect(concat.dtype).toBe("float32");
+  expect(concat.shape).toEqual([3, 2]);
+  expect(concat.data).toMatchSnapshot();
 });

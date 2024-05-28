@@ -10,3 +10,30 @@ Float32Array [
   36,
 ]
 `;
+
+exports[`work fine 2`] = `
+Float32Array [
+  2,
+  4,
+  6,
+]
+`;
+
+exports[`work fine 3`] = `
+Float32Array [
+  0,
+  4,
+  6,
+]
+`;
+
+exports[`work fine 4`] = `
+Float32Array [
+  0,
+  0,
+  4,
+  4,
+  6,
+  6,
+]
+`;

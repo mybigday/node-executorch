@@ -19,14 +19,20 @@ type TensorData =
   | Int32Array
   | BigInt64Array;
 
+type Optional<T> = T | null | undefined;
+
 interface TensorImpl {
   get dtype(): DType;
   get shape(): number[];
   get data(): TensorData;
+  setIndex(position: Array<number>, data: number|boolean): void
+  slice(slice_position: Array<Optional<Optional<number>[]>>): TensorImpl;
+  reshape(shape: number[]): TensorImpl;
 }
 
 interface Tensor {
   new (dtype: DType, shape: number[], data: TensorData): TensorImpl;
+  concat(tensors: TensorImpl[], axis: number): TensorImpl;
 }
 
 type EValue = null | string | number | boolean | TensorImpl;

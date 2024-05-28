@@ -48,8 +48,7 @@ Napi::Value napiValueFromEValue(const Napi::Env &env, const EValue &evalue) {
       return Napi::String::New(env, str);
     } break;
     case Tag::Tensor: {
-      auto *tensor = new exec_aten::Tensor(evalue.payload.as_tensor);
-      return executorch::node::Tensor::New(Napi::External<exec_aten::Tensor>::New(env, tensor));
+      return executorch::node::Tensor::New(evalue.payload.as_tensor);
     } break;
     case Tag::ListBool: {
       auto list = evalue.payload.copyable_union.as_bool_list;
