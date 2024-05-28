@@ -1,0 +1,41 @@
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    - uses: actions/checkout@v2
+      with:
+        ref: master
+        repository: pytorch/executorch
+        path: executorch
+    - name: Cached build
+      uses: actions/cache@v2
+      with:
+        path: executorch/cmake-out
+        key: ${{ runner.os }}-cmake-${{ hashFiles('executorch/CMakeLists.txt') }}
+    - name: Build executorch
+      run: |
+        cd executorch
+        ./install_requirements.sh
+        cmake -S . -B cmake-out -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_INSTALL_PREFIX=cmake-out \
+          -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON \
+          -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON \
+          -DEXECUTORCH_BUILD_KERNELS_CUSTOM=ON \
+          -DEXECUTORCH_BUILD_KERNELS_QUANTIZED=ON \
+          -DEXECUTORCH_BUILD_XNNPACK=ON \
+          -DEXECUTORCH_BUILD_PTHREADPOOL=ON
+        cmake --build cmake-out --config Release --target install -j$(nproc)
+    - name: Install dependencies
+      run: npm install
+    - name: Build
+      run: npm run build -- --CDCMAKE_PREFIX_PATH=executorch/cmake-out --CDEXECUTORCH_ROOT=executorch
+    - name: Run tests
+      run: npm test
