@@ -24,13 +24,9 @@ jobs:
     - name: Build executorch
       run: |
         cd executorch
-        ./install_requirements.sh --pybind
-        cmake -S . -B cmake-out -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_INSTALL_PREFIX=cmake-out \
-          -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON \
-          -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON \
-          -DEXECUTORCH_BUILD_XNNPACK=ON
-        cmake --build cmake-out --config Release --target install -j$(nproc)
+        PYTHON_EXECUTABLE=python \
+        CMAKE_ARGS="-DEXECUTORCH_BUILD_XNNPACK=ON" \
+        ./.ci/scripts/setup-linux.sh cmake
     - name: Install dependencies
       run: npm install
     - name: Build
