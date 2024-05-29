@@ -107,6 +107,11 @@ Napi::Value Tensor::Shape(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
+  if (tensor_ == nullptr) {
+    Napi::TypeError::New(env, "Tensor is disposed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   Napi::Array shape = Napi::Array::New(env, tensor_->dim());
   for (size_t i = 0; i < tensor_->dim(); i++) {
     shape.Set(i, Napi::Number::New(env, tensor_->size(i)));
@@ -125,6 +130,11 @@ Napi::Value Tensor::Dtype(const Napi::CallbackInfo &info) {
 Napi::Value Tensor::GetData(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
+
+  if (tensor_ == nullptr) {
+    Napi::TypeError::New(env, "Tensor is disposed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   size_t size = tensor_->nbytes();
   size_t n_elem = tensor_->numel();
@@ -190,6 +200,11 @@ void Tensor::SetData(const Napi::CallbackInfo &info, const Napi::Value &value) {
 void Tensor::SetIndex(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
+
+  if (tensor_ == nullptr) {
+    Napi::TypeError::New(env, "Tensor is disposed").ThrowAsJavaScriptException();
+    return;
+  }
 
   if (info.Length() < 2) {
     Napi::TypeError::New(env, "Expected 2 arguments")
@@ -261,6 +276,11 @@ void Tensor::SetIndex(const Napi::CallbackInfo &info) {
 Napi::Value Tensor::Slice(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
+
+  if (tensor_ == nullptr) {
+    Napi::TypeError::New(env, "Tensor is disposed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (info.Length() < 1 || !info[0].IsArray()) {
     Napi::TypeError::New(env, "Expected array").ThrowAsJavaScriptException();
@@ -364,6 +384,10 @@ Napi::Value Tensor::Concat(const Napi::CallbackInfo &info) {
     }
     auto tensor = Napi::ObjectWrap<Tensor>::Unwrap(item.As<Napi::Object>())->
         GetTensorPtr();
+    if (tensor == nullptr) {
+      Napi::TypeError::New(env, "Tensor is disposed").ThrowAsJavaScriptException();
+      return env.Undefined();
+    }
     tensors[i] = tensor;
     if (i == 0) {
       dtype = tensor->scalar_type();
@@ -439,6 +463,11 @@ Napi::Value Tensor::Reshape(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
+  if (tensor_ == nullptr) {
+    Napi::TypeError::New(env, "Tensor is disposed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (info.Length() < 1 || !info[0].IsArray()) {
     Napi::TypeError::New(env, "Expected array").ThrowAsJavaScriptException();
     return env.Undefined();
@@ -471,6 +500,10 @@ Napi::Value Tensor::Reshape(const Napi::CallbackInfo &info) {
   return Tensor::New(tensor);
 }
 
+void Tensor::Dispose(const Napi::CallbackInfo &info) {
+  tensor_.reset();
+}
+
 Napi::Object Tensor::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func =
       DefineClass(env, "Tensor",
@@ -480,7 +513,8 @@ Napi::Object Tensor::Init(Napi::Env env, Napi::Object exports) {
                    InstanceAccessor("data", &Tensor::GetData, &Tensor::SetData),
                    InstanceMethod("setIndex", &Tensor::SetIndex),
                    InstanceMethod("slice", &Tensor::Slice),
-                   InstanceMethod("reshape", &Tensor::Reshape)});
+                   InstanceMethod("reshape", &Tensor::Reshape),
+                    InstanceMethod("dispose", &Tensor::Dispose)});
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();

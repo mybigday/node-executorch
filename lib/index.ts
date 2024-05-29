@@ -28,6 +28,7 @@ interface TensorImpl {
   setIndex(position: Array<number>, data: number|boolean): void
   slice(slice_position: Array<Optional<Optional<number>[]>>): TensorImpl;
   reshape(shape: number[]): TensorImpl;
+  dispose(): void;
 }
 
 interface Tensor {
@@ -41,6 +42,7 @@ interface ModuleImpl {
   forward(inputs: EValue[]): Promise<EValue[]>;
   execute(method_name: string, inputs: EValue[]): Promise<EValue[]>;
   get method_names(): string[];
+  dispose(): void;
 }
 
 interface Module {

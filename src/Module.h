@@ -36,6 +36,7 @@ protected:
   Napi::Value Forward(const Napi::CallbackInfo &info);
   Napi::Value Execute(const Napi::CallbackInfo &info);
   Napi::Value MethodNames(const Napi::CallbackInfo &info);
+  void Dispose(const Napi::CallbackInfo &info);
 
 private:
   static Napi::FunctionReference constructor;

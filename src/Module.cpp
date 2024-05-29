@@ -132,6 +132,11 @@ Napi::Value Module::Execute(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
+  if (!module_) {
+    Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (info.Length() < 2) {
     Napi::TypeError::New(env, "Expected method name and input array")
         .ThrowAsJavaScriptException();
@@ -180,6 +185,11 @@ Napi::Value Module::LoadMethod(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
+  if (!module_) {
+    Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   if (info.Length() < 1 || !info[0].IsString()) {
     Napi::TypeError::New(env, "Expected a string").ThrowAsJavaScriptException();
     return env.Undefined();
@@ -199,6 +209,11 @@ Napi::Value Module::LoadMethod(const Napi::CallbackInfo &info) {
 Napi::Value Module::Forward(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
+
+  if (!module_) {
+    Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
 
   if (info.Length() < 1 || !info[0].IsArray()) {
     Napi::TypeError::New(env, "Expected input array")
@@ -221,6 +236,11 @@ Napi::Value Module::MethodNames(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
+  if (!module_) {
+    Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
   auto result = (*module_)->method_names();
   if (result.ok()) {
     auto names = result.get();
@@ -238,6 +258,10 @@ Napi::Value Module::MethodNames(const Napi::CallbackInfo &info) {
   }
 }
 
+void Module::Dispose(const Napi::CallbackInfo &info) {
+  module_.reset();
+}
+
 Napi::Object Module::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(
       env, "Module",
@@ -245,7 +269,8 @@ Napi::Object Module::Init(Napi::Env env, Napi::Object exports) {
        InstanceAccessor("method_names", &Module::MethodNames, nullptr),
        InstanceMethod("loadMethod", &Module::LoadMethod),
        InstanceMethod("forward", &Module::Forward),
-       InstanceMethod("execute", &Module::Execute)});
+       InstanceMethod("execute", &Module::Execute),
+       InstanceMethod("dispose", &Module::Dispose)});
 
   constructor = Napi::Persistent(func);
   constructor.SuppressDestruct();

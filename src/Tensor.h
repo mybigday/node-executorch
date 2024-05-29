@@ -36,6 +36,7 @@ protected:
   void SetIndex(const Napi::CallbackInfo &info);
   Napi::Value Slice(const Napi::CallbackInfo &info);
   Napi::Value Reshape(const Napi::CallbackInfo &info);
+  void Dispose(const Napi::CallbackInfo &info);
 
   static Napi::Value Concat(const Napi::CallbackInfo &info);
 
