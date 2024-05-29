@@ -26,6 +26,7 @@ public:
   }
 
   inline exec_aten::Tensor GetTensor() { return *tensor_; }
+  inline exec_aten::Tensor* GetTensorPtr() { return tensor_.get(); }
 
 protected:
   Napi::Value Shape(const Napi::CallbackInfo &info);
