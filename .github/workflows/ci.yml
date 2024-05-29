@@ -25,6 +25,7 @@ jobs:
     - name: Build executorch
       run: |
         cd executorch
+        pip install tomli zstd
         PYTHON_EXECUTABLE=python \
         CMAKE_ARGS="-DEXECUTORCH_BUILD_XNNPACK=ON" \
         ./.ci/scripts/setup-linux.sh cmake
