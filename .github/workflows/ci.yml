@@ -35,7 +35,7 @@ jobs:
         python -m venv .venv
         source .venv/bin/activate
         cd executorch
-        pip install tomli zstd setuptools
+        pip install tomli zstd setuptools wheel
         CMAKE_ARGS="-DEXECUTORCH_BUILD_XNNPACK=ON" \
         ./.ci/scripts/setup-linux.sh cmake
     - name: Install dependencies
