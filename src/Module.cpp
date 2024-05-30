@@ -144,9 +144,18 @@ Module::Module(const Napi::CallbackInfo &info)
 
   auto module = info[0].As<Napi::External<ModuleHolder>>();
   module_.reset(std::move(module.Data()));
+
+  auto method_names = (*module_)->method_names();
+  if (!method_names.ok()) {
+    Napi::Error::New(env, "Failed to get method names: " +
+                              errorString(method_names.error()))
+        .ThrowAsJavaScriptException();
+    return;
+  }
+  method_names_ = method_names.get();
 }
 
-// execute(method: string, inputs?: EValue[]): Promise<EValue[]>
+// execute(method: string, inputs?: EValue[]): Promise<EValue[]> | undefined
 Napi::Value Module::Execute(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
@@ -160,12 +169,11 @@ Napi::Value Module::Execute(const Napi::CallbackInfo &info) {
     Napi::TypeError::New(env, "Expected a string").ThrowAsJavaScriptException();
     return env.Undefined();
   }
-  if (info.Length() > 1 && !info[1].IsArray()) {
-    Napi::TypeError::New(env, "Expected an array").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
 
   std::string method = info[0].As<Napi::String>().Utf8Value();
+  if (method_names_.count(method) == 0) {
+    return env.Undefined();
+  }
 
   if (info.Length() > 1) {
     std::vector<torch::executor::EValue> inputs;
@@ -214,7 +222,9 @@ Napi::Value Module::LoadMethod(const Napi::CallbackInfo &info) {
   }
 
   std::string method = info[0].As<Napi::String>().Utf8Value();
-
+  if (method_names_.count(method) == 0) {
+    return env.Undefined();
+  }
   if ((*module_)->is_method_loaded(method)) {
     return env.Undefined();
   }
@@ -230,6 +240,10 @@ Napi::Value Module::Forward(const Napi::CallbackInfo &info) {
 
   if (!module_) {
     Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  if (method_names_.count("forward") == 0) {
     return env.Undefined();
   }
 
@@ -341,9 +355,7 @@ Napi::Value Module::GetMethodMeta(const Napi::CallbackInfo &info) {
   }
 
   std::string method = info[0].As<Napi::String>().Utf8Value();
-  const auto method_names = (*module_)->method_names();
-
-  if (!method_names.ok() || method_names.get().count(method) == 0) {
+  if (method_names_.count(method) == 0) {
     return env.Undefined();
   }
 

@@ -2,6 +2,7 @@
 
 #include <executorch/extension/module/module.h>
 #include <memory>
+#include <unordered_set>
 #include <napi.h>
 
 namespace executorch {
@@ -42,6 +43,7 @@ protected:
 private:
   static Napi::FunctionReference constructor;
   std::unique_ptr<ModuleHolder> module_;
+  std::unordered_set<std::string> method_names_;
 };
 
 } // namespace node

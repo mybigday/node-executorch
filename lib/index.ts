@@ -55,9 +55,9 @@ type MethodMeta = {
 };
 
 interface ModuleImpl {
-  forward(inputs: EValue[]): Promise<EValue[]>;
-  execute(method_name: string, inputs?: EValue[]): Promise<EValue[]>;
-  getMethodMeta(method_name: string): MethodMeta;
+  forward(inputs: EValue[]): Promise<EValue[]> | undefined;
+  execute(method_name: string, inputs?: EValue[]): Promise<EValue[]> | undefined;
+  getMethodMeta(method_name: string): MethodMeta | undefined;
   get method_names(): string[];
   dispose(): void;
 }
