@@ -146,6 +146,7 @@ Module::Module(const Napi::CallbackInfo &info)
   module_.reset(std::move(module.Data()));
 }
 
+// execute(method: string, inputs?: EValue[]): Promise<EValue[]>
 Napi::Value Module::Execute(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
@@ -155,33 +156,32 @@ Napi::Value Module::Execute(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  if (info.Length() < 2) {
-    Napi::TypeError::New(env, "Expected method name and input array")
-        .ThrowAsJavaScriptException();
+  if (info.Length() < 1 || !info[0].IsString()) {
+    Napi::TypeError::New(env, "Expected a string").ThrowAsJavaScriptException();
     return env.Undefined();
   }
-  if (!info[1].IsString()) {
-    Napi::TypeError::New(env, "Expected method name")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-  if (!info[0].IsArray()) {
-    Napi::TypeError::New(env, "Expected input array")
-        .ThrowAsJavaScriptException();
+  if (info.Length() > 1 && !info[1].IsArray()) {
+    Napi::TypeError::New(env, "Expected an array").ThrowAsJavaScriptException();
     return env.Undefined();
   }
 
   std::string method = info[0].As<Napi::String>().Utf8Value();
 
-  std::vector<torch::executor::EValue> inputs;
-  auto inputsArray = info[1].As<Napi::Array>();
-  for (size_t i = 0; i < inputsArray.Length(); i++) {
-    inputs.push_back(evalueFromNapiValue(inputsArray.Get(i)));
-  }
+  if (info.Length() > 1) {
+    std::vector<torch::executor::EValue> inputs;
+    auto inputsArray = info[1].As<Napi::Array>();
+    for (size_t i = 0; i < inputsArray.Length(); i++) {
+      inputs.push_back(evalueFromNapiValue(inputsArray.Get(i)));
+    }
 
-  auto worker = new ExecuteWorker(env, module_.get(), method, inputs);
-  worker->Queue();
-  return worker->Promise();
+    auto worker = new ExecuteWorker(env, module_.get(), method, inputs);
+    worker->Queue();
+    return worker->Promise();
+  } else {
+    auto worker = new ExecuteWorker(env, module_.get(), method, {});
+    worker->Queue();
+    return worker->Promise();
+  }
 }
 
 Napi::Value Module::Load(const Napi::CallbackInfo &info) {

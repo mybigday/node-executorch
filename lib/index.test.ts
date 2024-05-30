@@ -15,12 +15,23 @@ it("Module", async () => {
     ],
     outputs: [{ tag: "tensor", tensor_info: { dtype: "float32", shape: [3, 2] } }],
   });
-  const outputs = await mod.forward([input, input]);
-  expect(outputs[0]).toBeInstanceOf(Tensor);
-  if (outputs[0] instanceof Tensor) {
-    expect(outputs[0].dtype).toBe("float32");
-    expect(outputs[0].shape).toEqual([3, 2]);
-    expect(outputs[0].data).toMatchSnapshot();
+  { // execute without inputs
+    const outputs = await mod.execute("forward");
+    expect(outputs[0]).toBeInstanceOf(Tensor);
+    if (outputs[0] instanceof Tensor) {
+      expect(outputs[0].dtype).toBe("float32");
+      expect(outputs[0].shape).toEqual([3, 2]);
+      expect(outputs[0].data).toMatchSnapshot();
+    }
+  }
+  { // forward
+    const outputs = await mod.forward([input, input]);
+    expect(outputs[0]).toBeInstanceOf(Tensor);
+    if (outputs[0] instanceof Tensor) {
+      expect(outputs[0].dtype).toBe("float32");
+      expect(outputs[0].shape).toEqual([3, 2]);
+      expect(outputs[0].data).toMatchSnapshot();
+    }
   }
 });
 
