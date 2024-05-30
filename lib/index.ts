@@ -41,6 +41,7 @@ type EValue = null | string | number | boolean | TensorImpl;
 interface ModuleImpl {
   forward(inputs: EValue[]): Promise<EValue[]>;
   execute(method_name: string, inputs: EValue[]): Promise<EValue[]>;
+  getMethodMeta(method_name: string): EValue | undefined;
   get method_names(): string[];
   dispose(): void;
 }

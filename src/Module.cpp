@@ -232,7 +232,7 @@ Napi::Value Module::Forward(const Napi::CallbackInfo &info) {
   return worker->Promise();
 }
 
-Napi::Value Module::MethodNames(const Napi::CallbackInfo &info) {
+Napi::Value Module::GetMethodNames(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
@@ -258,6 +258,38 @@ Napi::Value Module::MethodNames(const Napi::CallbackInfo &info) {
   }
 }
 
+// getMethodMeta(method: string): Optional<EValue>
+Napi::Value Module::GetMethodMeta(const Napi::CallbackInfo &info) {
+  Napi::Env env = info.Env();
+  Napi::HandleScope scope(env);
+
+  if (!module_) {
+    Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  if (info.Length() < 1 || !info[0].IsString()) {
+    Napi::TypeError::New(env, "Expected a string").ThrowAsJavaScriptException();
+    return env.Undefined();
+  }
+
+  std::string method = info[0].As<Napi::String>().Utf8Value();
+  const auto method_names = (*module_)->method_names();
+
+  if (!method_names.ok() || method_names.get().count(method) == 0) {
+    return env.Undefined();
+  }
+
+  auto result = (*module_)->execute(method);
+  if (result.ok()) {
+    auto outputs = result.get();
+    if (outputs.size() > 0) {
+      return napiValueFromEValue(env, outputs[0]);
+    }
+  }
+  return env.Undefined();
+}
+
 void Module::Dispose(const Napi::CallbackInfo &info) {
   module_.reset();
 }
@@ -266,10 +298,11 @@ Napi::Object Module::Init(Napi::Env env, Napi::Object exports) {
   Napi::Function func = DefineClass(
       env, "Module",
       {StaticMethod("load", &Module::Load),
-       InstanceAccessor("method_names", &Module::MethodNames, nullptr),
+       InstanceAccessor("method_names", &Module::GetMethodNames, nullptr),
        InstanceMethod("loadMethod", &Module::LoadMethod),
        InstanceMethod("forward", &Module::Forward),
        InstanceMethod("execute", &Module::Execute),
+       InstanceMethod("getMethodMeta", &Module::GetMethodMeta),
        InstanceMethod("dispose", &Module::Dispose)});
 
   constructor = Napi::Persistent(func);

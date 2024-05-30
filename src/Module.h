@@ -35,7 +35,8 @@ protected:
   Napi::Value LoadMethod(const Napi::CallbackInfo &info);
   Napi::Value Forward(const Napi::CallbackInfo &info);
   Napi::Value Execute(const Napi::CallbackInfo &info);
-  Napi::Value MethodNames(const Napi::CallbackInfo &info);
+  Napi::Value GetMethodNames(const Napi::CallbackInfo &info);
+  Napi::Value GetMethodMeta(const Napi::CallbackInfo &info);
   void Dispose(const Napi::CallbackInfo &info);
 
 private:
