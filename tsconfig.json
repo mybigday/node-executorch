@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "module": "esnext",
+    "target": "es2020",
   }
 }

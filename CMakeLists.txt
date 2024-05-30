@@ -70,17 +70,6 @@ function(target_link_options_shared_lib target_name)
   endif()
 endfunction()
 
-file(
-  GLOB SOURCES
-  src/addon.cc
-  src/Module.h
-  src/Module.cpp
-  src/Tensor.h
-  src/Tensor.cpp
-  src/utils.h
-  src/utils.cpp
-)
-
 if(NOT EXECUTORCH_ROOT)
   include(FetchContent)
   FetchContent_Declare(
@@ -92,8 +81,34 @@ if(NOT EXECUTORCH_ROOT)
   set(EXECUTORCH_ROOT ${executorch_SOURCE_DIR})
 endif()
 
+set(ABSL_ENABLE_INSTALL ON)
+set(ABSL_PROPAGATE_CXX_STD ON)
+set(_pic_flag ${CMAKE_POSITION_INDEPENDENT_CODE})
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+add_subdirectory(${EXECUTORCH_ROOT}/examples/models/llama2/third-party/abseil-cpp third-party/abseil-cpp)
+add_subdirectory(${EXECUTORCH_ROOT}/examples/models/llama2/third-party/re2 third-party/re2)
+set(CMAKE_POSITION_INDEPENDENT_CODE ${_pic_flag})
+
+file(
+  GLOB SOURCES
+  src/addon.cc
+  src/Module.h
+  src/Module.cpp
+  src/Tensor.h
+  src/Tensor.cpp
+  src/utils.h
+  src/utils.cpp
+  src/Tokenizer.h
+  src/Tokenizer.cpp
+  "${EXECUTORCH_ROOT}/examples/models/llama2/tokenizer/tokenizer.h"
+  "${EXECUTORCH_ROOT}/examples/models/llama2/tokenizer/tiktoken.h"
+  "${EXECUTORCH_ROOT}/examples/models/llama2/tokenizer/tiktoken.cpp"
+  "${EXECUTORCH_ROOT}/examples/models/llama2/tokenizer/bpe_tokenizer.h"
+  "${EXECUTORCH_ROOT}/examples/models/llama2/tokenizer/bpe_tokenizer.cpp"
+)
+
 find_package(executorch REQUIRED CONFIG)
-set(link_libraries executorch extension_module extension_data_loader)
+set(link_libraries executorch extension_module extension_data_loader re2::re2)
 
 if(TARGET optimized_native_cpu_ops_lib)
   message(STATUS "Optimized kernels enabled")
@@ -171,6 +186,7 @@ include_directories(
   ${CMAKE_JS_INC}
   ${executorch_INCLUDE_DIRS}
   "${EXECUTORCH_ROOT}/.."
+  "${EXECUTORCH_ROOT}/examples/models/llama2/tokenizer"
 )
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")

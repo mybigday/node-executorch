@@ -103,6 +103,7 @@ size_t getSlicePos(Napi::Value val, size_t dimSize, size_t default_value) {
   }
 }
 
+// get shape(): number[]
 Napi::Value Tensor::Shape(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
@@ -120,6 +121,7 @@ Napi::Value Tensor::Shape(const Napi::CallbackInfo &info) {
   return shape;
 }
 
+// get dtype(): string
 Napi::Value Tensor::Dtype(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
@@ -189,6 +191,7 @@ Napi::Value Tensor::GetData(const Napi::CallbackInfo &info) {
   }
 }
 
+// set data(data: Buffer | TypedArray): void
 void Tensor::SetData(const Napi::CallbackInfo &info, const Napi::Value &value) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
@@ -197,6 +200,7 @@ void Tensor::SetData(const Napi::CallbackInfo &info, const Napi::Value &value) {
   memcpy(tensor_->mutable_data_ptr(), data, tensor_->nbytes());
 }
 
+// setIndex(index: number[], value: number | boolean): void
 void Tensor::SetIndex(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
@@ -273,6 +277,7 @@ void Tensor::SetIndex(const Napi::CallbackInfo &info) {
   }
 }
 
+// 
 Napi::Value Tensor::Slice(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);

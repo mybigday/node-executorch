@@ -1,10 +1,12 @@
 import path from "path";
-import { Module, Tensor } from "./index";
+import { Module, Tensor, BPETokenizer } from "./index";
 
-const model = path.resolve(__dirname, "__fixtures__/mul.pte");
+const modelPath = path.resolve(__dirname, "__fixtures__/mul.pte");
+
+const tokenizerPath = path.resolve(__dirname, "__fixtures__/tokenizer.model");
 
 it("Module", async () => {
-  const mod = await Module.load(model);
+  const mod = await Module.load(modelPath);
   expect(mod.method_names).toEqual(["forward"]);
   const input = new Tensor("float32", [3, 2], new Float32Array([1, 2, 3, 4, 5, 6]));
   const outputs = await mod.forward([input, input]);
@@ -30,4 +32,14 @@ it("Tensor", async () => {
   expect(concat.dtype).toBe("float32");
   expect(concat.shape).toEqual([3, 4]);
   expect(concat.data).toMatchSnapshot();
+});
+
+
+it("Tokenizer", async () => {
+  const tokenizer = await BPETokenizer.load(tokenizerPath);
+  expect(tokenizer.vocab_size).toBe(32000);
+  expect(tokenizer.bos_token_id).toBe(1n);
+  expect(tokenizer.eos_token_id).toBe(2n);
+  expect(tokenizer.encode("Hello, world!", 1)).toMatchSnapshot();
+  expect(tokenizer.decode(3n, 0n)).toBe("Hello");
 });
