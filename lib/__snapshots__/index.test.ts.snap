@@ -54,3 +54,14 @@ Float32Array [
   6,
 ]
 `;
+
+exports[`Tensor 4`] = `
+Float32Array [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+]
+`;

@@ -18,10 +18,10 @@ public:
            value.As<Napi::Object>().InstanceOf(constructor.Value());
   }
 
-  static Napi::Object New(exec_aten::Tensor tensor) {
+  static Napi::Object New(const exec_aten::Tensor &tensor) {
     auto instance = constructor.New({});
     auto *obj = Napi::ObjectWrap<Tensor>::Unwrap(instance);
-    obj->tensor_ = std::make_unique<exec_aten::Tensor>(std::move(tensor));
+    obj->tensor_ = std::make_unique<exec_aten::Tensor>(std::move(tensor.unsafeGetTensorImpl()));
     return instance;
   }
 
@@ -36,6 +36,7 @@ protected:
   void SetIndex(const Napi::CallbackInfo &info);
   Napi::Value Slice(const Napi::CallbackInfo &info);
   Napi::Value Reshape(const Napi::CallbackInfo &info);
+  Napi::Value Expand(const Napi::CallbackInfo &info); // expand(tensor, size)
   void Dispose(const Napi::CallbackInfo &info);
 
   static Napi::Value Concat(const Napi::CallbackInfo &info);
