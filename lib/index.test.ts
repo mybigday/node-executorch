@@ -7,7 +7,14 @@ it("Module", async () => {
   const mod = await Module.load(model);
   expect(mod.method_names).toEqual(["forward"]);
   const input = new Tensor("float32", [3, 2], new Float32Array([1, 2, 3, 4, 5, 6]));
-  expect(mod.getMethodMeta("forward")).toBeDefined();
+  expect(mod.getMethodMeta("forward")).toEqual({
+    name: "forward",
+    inputs: [
+      { tag: "tensor", tensor_info: { dtype: "float32", shape: [3, 2] } },
+      { tag: "tensor", tensor_info: { dtype: "float32", shape: [3, 2] } },
+    ],
+    outputs: [{ tag: "tensor", tensor_info: { dtype: "float32", shape: [3, 2] } }],
+  });
   const outputs = await mod.forward([input, input]);
   expect(outputs[0]).toBeInstanceOf(Tensor);
   if (outputs[0] instanceof Tensor) {

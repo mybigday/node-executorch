@@ -38,10 +38,26 @@ interface Tensor {
 
 type EValue = null | string | number | boolean | TensorImpl;
 
+type TensorInfo = {
+  dtype: DType;
+  shape: number[];
+};
+
+type EValueSpec = {
+  tag: "null" | "string" | "number" | "boolean" | "tensor";
+  tensor_info?: TensorInfo;
+};
+
+type MethodMeta = {
+  name: string;
+  inputs: Array<EValueSpec | undefined>;
+  outputs: Array<EValueSpec | undefined>;
+};
+
 interface ModuleImpl {
   forward(inputs: EValue[]): Promise<EValue[]>;
   execute(method_name: string, inputs: EValue[]): Promise<EValue[]>;
-  getMethodMeta(method_name: string): EValue | undefined;
+  getMethodMeta(method_name: string): MethodMeta;
   get method_names(): string[];
   dispose(): void;
 }

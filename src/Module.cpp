@@ -1,8 +1,26 @@
 #include "Module.h"
 #include "utils.h"
 #include <string>
+#include <unordered_map>
 
 namespace executorch::node {
+
+const std::unordered_map<exec_aten::ScalarType, std::string> dtypeMap = {
+    {exec_aten::ScalarType::Byte, "uint8"},
+    {exec_aten::ScalarType::Char, "int8"},
+    {exec_aten::ScalarType::Short, "int16"},
+    {exec_aten::ScalarType::Int, "int32"},
+    {exec_aten::ScalarType::Long, "int64"},
+    {exec_aten::ScalarType::Float, "float32"},
+    {exec_aten::ScalarType::Double, "float64"},
+    {exec_aten::ScalarType::Bool, "bool"}};
+
+const std::unordered_map<torch::executor::Tag, std::string> tagMap = {
+    {torch::executor::Tag::Int, "int"},
+    {torch::executor::Tag::Double, "double"},
+    {torch::executor::Tag::Bool, "bool"},
+    {torch::executor::Tag::String, "string"},
+    {torch::executor::Tag::Tensor, "tensor"}};
 
 /* LoadWorker */
 
@@ -258,7 +276,56 @@ Napi::Value Module::GetMethodNames(const Napi::CallbackInfo &info) {
   }
 }
 
-// getMethodMeta(method: string): Optional<EValue>
+Napi::Value toNapiValue(const Napi::Env &env, const torch::executor::TensorInfo &tensor_info) {
+  auto shape = tensor_info.sizes();
+  auto dtype = tensor_info.scalar_type();
+  auto obj = Napi::Object::New(env);
+  auto shapeArray = Napi::Array::New(env, shape.size());
+  for (size_t i = 0; i < shape.size(); i++) {
+    shapeArray.Set(i, shape[i]);
+  }
+  obj.Set("shape", shapeArray);
+  obj.Set("dtype", dtypeMap.at(dtype));
+  return obj;
+}
+
+Napi::Value toNapiValue(const Napi::Env &env, const torch::executor::MethodMeta &meta) {
+  auto obj = Napi::Object::New(env);
+  obj.Set("name", meta.name());
+  auto inputs = Napi::Array::New(env, meta.num_inputs());
+  for (size_t i = 0; i < meta.num_inputs(); i++) {
+    auto tag = meta.input_tag(i);
+    if (tag.ok()) {
+      auto info = Napi::Object::New(env);
+      info.Set("tag", tagMap.at(tag.get()));
+      if (tag.get() == torch::executor::Tag::Tensor) {
+        info.Set("tensor_info", toNapiValue(env, meta.input_tensor_meta(i).get()));
+      }
+      inputs.Set(i, info);
+    } else {
+      inputs.Set(i, env.Undefined());
+    }
+  }
+  obj.Set("inputs", inputs);
+  auto outputs = Napi::Array::New(env, meta.num_outputs());
+  for (size_t i = 0; i < meta.num_outputs(); i++) {
+    auto tag = meta.output_tag(i);
+    if (tag.ok()) {
+      auto info = Napi::Object::New(env);
+      info.Set("tag", tagMap.at(tag.get()));
+      if (tag.get() == torch::executor::Tag::Tensor) {
+        info.Set("tensor_info", toNapiValue(env, meta.output_tensor_meta(i).get()));
+      }
+      outputs.Set(i, info);
+    } else {
+      outputs.Set(i, env.Undefined());
+    }
+  }
+  obj.Set("outputs", outputs);
+  return obj;
+}
+
+// getMethodMeta(method: string): MethodMeta
 Napi::Value Module::GetMethodMeta(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
@@ -280,14 +347,15 @@ Napi::Value Module::GetMethodMeta(const Napi::CallbackInfo &info) {
     return env.Undefined();
   }
 
-  auto result = (*module_)->execute(method);
-  if (result.ok()) {
-    auto outputs = result.get();
-    if (outputs.size() > 0) {
-      return napiValueFromEValue(env, outputs[0]);
-    }
+  auto result = (*module_)->method_meta(method);
+  if (!result.ok()) {
+    Napi::Error::New(env, "Failed to get method meta: " +
+                              errorString(result.error()))
+        .ThrowAsJavaScriptException();
+    return env.Undefined();
   }
-  return env.Undefined();
+  auto meta = result.get();
+  return toNapiValue(env, meta);
 }
 
 void Module::Dispose(const Napi::CallbackInfo &info) {
