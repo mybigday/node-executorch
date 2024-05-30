@@ -15,6 +15,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: .venv
+        key: ${{ runner.os }}-venv
     - uses: actions/checkout@v4
       with:
         repository: pytorch/executorch
