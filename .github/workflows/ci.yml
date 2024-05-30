@@ -11,7 +11,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 20.x
-    - uses: s-weigand/setup-conda@v1
+    - name: Cached build
+      uses: actions/cache@v2
+      with:
+        path: .venv
     - uses: actions/checkout@v4
       with:
         repository: pytorch/executorch
@@ -24,9 +27,10 @@ jobs:
         key: ${{ runner.os }}-cmake-${{ hashFiles('executorch/CMakeLists.txt') }}
     - name: Build executorch
       run: |
+        python -m venv .venv
+        source .venv/bin/activate
         cd executorch
         pip install tomli zstd
-        PYTHON_EXECUTABLE=python \
         CMAKE_ARGS="-DEXECUTORCH_BUILD_XNNPACK=ON" \
         ./.ci/scripts/setup-linux.sh cmake
     - name: Install dependencies
