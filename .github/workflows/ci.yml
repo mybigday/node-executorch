@@ -11,11 +11,15 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 20.x
+    - name: Use Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.10
     - name: Cached build
       uses: actions/cache@v2
       with:
         path: .venv
-        key: ${{ runner.os }}-venv
+        key: ${{ runner.os }}-venv-3_10
     - uses: actions/checkout@v4
       with:
         repository: pytorch/executorch
@@ -31,7 +35,7 @@ jobs:
         python -m venv .venv
         source .venv/bin/activate
         cd executorch
-        pip install tomli zstd
+        pip install tomli zstd setuptools
         CMAKE_ARGS="-DEXECUTORCH_BUILD_XNNPACK=ON" \
         ./.ci/scripts/setup-linux.sh cmake
     - name: Install dependencies
