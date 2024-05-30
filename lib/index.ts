@@ -25,14 +25,14 @@ interface TensorImpl {
   get dtype(): DType;
   get shape(): number[];
   get data(): TensorData;
-  setIndex(position: Array<number>, data: number|boolean): void
+  setIndex(position: Array<number>, data: number | boolean): void
   slice(slice_position: Array<Optional<Optional<number>[]>>): TensorImpl;
   reshape(shape: number[]): TensorImpl;
   dispose(): void;
 }
 
 interface Tensor {
-  new (dtype: DType, shape: number[], data: TensorData): TensorImpl;
+  new(dtype: DType, shape: number[], data: TensorData): TensorImpl;
   concat(tensors: TensorImpl[], axis: number): TensorImpl;
 }
 
