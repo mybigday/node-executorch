@@ -95,6 +95,21 @@ endif()
 find_package(executorch REQUIRED CONFIG)
 set(link_libraries executorch extension_module extension_data_loader)
 
+# copy assets
+add_custom_target(
+  copy_assets ALL
+  COMMAND ${CMAKE_COMMAND} -E make_directory ${OUTPUT_BIN_DIR}
+  COMMENT "Creating output directory"
+)
+
+# copy libextension_module.so or libextension_module.dll
+add_custom_command(
+  TARGET copy_assets
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy ${LIB_extension_module} ${OUTPUT_BIN_DIR}
+  COMMENT "Copying extension_module"
+)
+
 if(TARGET optimized_native_cpu_ops_lib)
   message(STATUS "Optimized kernels enabled")
   list(
@@ -150,6 +165,12 @@ if(TARGET qnn_executorch_backend)
   message(STATUS "QNN backend enabled")
   list(APPEND link_libraries qnn_executorch_backend)
   target_link_options_shared_lib(qnn_executorch_backend)
+  add_custom_command(
+    TARGET copy_assets
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${LIB_qnn_executorch_backend} ${OUTPUT_BIN_DIR}
+    COMMENT "Copying assets"
+  )
 endif()
 
 # MPS backend
@@ -185,8 +206,11 @@ if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
     execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAGS})
 endif()
 
-add_custom_target(
-  copy_assets ALL DEPENDS ${PROJECT_NAME}
+add_dependencies(copy_assets ${PROJECT_NAME})
+
+add_custom_command(
+  TARGET copy_assets
+  POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${OUTPUT_BIN_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>
   COMMENT "Copying assets"
 )
