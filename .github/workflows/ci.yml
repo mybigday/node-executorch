@@ -40,6 +40,7 @@ jobs:
         PYTHON_EXECUTABLE=python \
         CMAKE_ARGS="-DEXECUTORCH_BUILD_XNNPACK=ON" \
         ./.ci/scripts/setup-linux.sh cmake
+        cmake --install cmake-out --prefix cmake-out
     - name: Install dependencies
       run: yarn install
     - name: Build
