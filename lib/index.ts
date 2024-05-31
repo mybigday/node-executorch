@@ -71,9 +71,17 @@ interface Binding {
   Tensor: Tensor;
 }
 
-const mod = require(
-  `../bin/${process.platform}/${process.arch}/node-executorch.node`,
-) as Binding;
+const moduleBasePath = `../bin/${process.platform}/${process.arch}`;
+
+if (process.platform === "linux") {
+  process.env.LD_LIBRARY_PATH = `${moduleBasePath}:${process.env.LD_LIBRARY_PATH}`;
+} else if (process.platform === "darwin") {
+  process.env.DYLD_LIBRARY_PATH = `${moduleBasePath}:${process.env.DYLD_LIBRARY_PATH}`;
+} else if (process.platform === "win32") {
+  process.env.PATH = `${moduleBasePath};${process.env.PATH}`;
+}
+
+const mod = require(`${moduleBasePath}/node-executorch.node`) as Binding;
 
 export const Module = mod.Module;
 export const Tensor = mod.Tensor;
