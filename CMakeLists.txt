@@ -127,9 +127,11 @@ else()
   target_link_options_shared_lib(portable_ops_lib)
 endif()
 
-# quantized_ops_lib: Register quantized op kernels into the runtime
-target_link_options_shared_lib(quantized_ops_lib)
-list(APPEND link_libraries quantized_kernels quantized_ops_lib)
+if(TARGET quantized_ops_lib)
+  message(STATUS "Quantized kernels enabled")
+  list(APPEND link_libraries quantized_kernels quantized_ops_lib)
+  target_link_options_shared_lib(quantized_ops_lib)
+endif()
 
 if(TARGET cpuinfo)
   list(APPEND link_libraries cpuinfo)
