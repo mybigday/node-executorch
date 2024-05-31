@@ -43,6 +43,6 @@ jobs:
     - name: Install dependencies
       run: yarn install
     - name: Build
-      run: yarn build --CDCMAKE_PREFIX_PATH=executorch/cmake-out --CDEXECUTORCH_ROOT=executorch
+      run: yarn build --CDCMAKE_PREFIX_PATH=$(realpath executorch/cmake-out) --CDEXECUTORCH_SRC_ROOT=$(realpath executorch)
     - name: Run tests
       run: yarn test

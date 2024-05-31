@@ -81,7 +81,7 @@ file(
   src/utils.cpp
 )
 
-if(NOT EXECUTORCH_ROOT)
+if(NOT EXECUTORCH_SRC_ROOT)
   include(FetchContent)
   FetchContent_Declare(
     executorch
@@ -89,7 +89,7 @@ if(NOT EXECUTORCH_ROOT)
     GIT_TAG main
   )
   FetchContent_MakeAvailable(executorch)
-  set(EXECUTORCH_ROOT ${executorch_SOURCE_DIR})
+  set(EXECUTORCH_SRC_ROOT ${executorch_SOURCE_DIR})
 endif()
 
 find_package(executorch REQUIRED CONFIG)
@@ -170,7 +170,7 @@ endif()
 include_directories(
   ${CMAKE_JS_INC}
   ${executorch_INCLUDE_DIRS}
-  "${EXECUTORCH_ROOT}/.."
+  "${EXECUTORCH_SRC_ROOT}/.."
 )
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
