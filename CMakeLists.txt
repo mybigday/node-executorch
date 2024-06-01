@@ -229,8 +229,11 @@ target_link_libraries(
   ${PROJECT_NAME}
   ${link_libraries}
   ${CMAKE_JS_LIB}
-  ${CMAKE_JS_NODELIB_TARGET}
 )
+
+if(CMAKE_JS_NODELIB_TARGET AND MINGW)
+  set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-lnode -L ${CMAKE_BINARY_DIR}")
+endif()
 
 add_dependencies(copy_assets ${PROJECT_NAME})
 
@@ -240,3 +243,26 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${PROJECT_NAME}> ${OUTPUT_BIN_DIR}/$<TARGET_FILE_NAME:${PROJECT_NAME}>
   COMMENT "Copying assets"
 )
+
+if(MINGW)
+  # copy libunwind.dll, libc++.dll form the MinGW directory
+  find_program(MINGW_CC ${CMAKE_C_COMPILER})
+  get_filename_component(MINGW_DIR ${MINGW_CC} DIRECTORY)
+  get_filename_component(MINGW_DIR ${MINGW_DIR} DIRECTORY)
+  if(ARCH STREQUAL "arm64")
+    set(MINGW_DIR ${MINGW_DIR}/aarch64-w64-mingw32)
+  else()
+    set(MINGW_DIR ${MINGW_DIR}/x86_64-w64-mingw32)
+  endif()
+  file(
+    GLOB MINGW_DLLS
+    ${MINGW_DIR}/bin/libunwind.dll
+    ${MINGW_DIR}/bin/libc++.dll
+  )
+  add_custom_command(
+    TARGET copy_assets
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy ${MINGW_DLLS} ${OUTPUT_BIN_DIR}
+    COMMENT "Copying MinGW DLLs"
+  )
+endif()
