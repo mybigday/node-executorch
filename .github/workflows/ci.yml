@@ -37,10 +37,12 @@ jobs:
         cd executorch
         pip install tomli zstd setuptools wheel
         pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
-        PYTHON_EXECUTABLE=python \
-        CMAKE_ARGS="-DEXECUTORCH_BUILD_XNNPACK=ON -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON" \
-        ./.ci/scripts/setup-linux.sh cmake
-        cmake --install cmake-out --prefix cmake-out
+        ./install_requirements.sh
+        cmake -S . - B cmake-out -DCMAKE_INSTALL_PREFIX=cmake-out \
+          -DEXECUTORCH_BUILD_XNNPACK=ON \
+          -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON \
+          -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON
+        cmake --build cmake-out --target install --config Release
     - name: Install dependencies
       run: yarn install
     - name: Build
