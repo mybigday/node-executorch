@@ -1,0 +1,31 @@
+set(CMAKE_SYSTEM_NAME Linux)
+set(CMAKE_SYSTEM_PROCESSOR aarch64)
+
+set(CMAKE_C_COMPILER "clang")
+set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_ASM_COMPILER "aarch64-linux-gnu-as")
+
+if(NOT CMAKE_FIND_ROOT_PATH_MODE_PROGRAM)
+    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+endif()
+if(NOT CMAKE_FIND_ROOT_PATH_MODE_LIBRARY)
+    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+endif()
+if(NOT CMAKE_FIND_ROOT_PATH_MODE_INCLUDE)
+    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+endif()
+if(NOT CMAKE_FIND_ROOT_PATH_MODE_PACKAGE)
+    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
+endif()
+
+set(SYSROOT /usr/aarch64-linux-gnu)
+
+set(CMAKE_C_FLAGS "--target=aarch64-linux-gnu -isysroot=${SYSROOT}")
+set(CMAKE_CXX_FLAGS "--target=aarch64-linux-gnu -isysroot=${SYSROOT}")
+
+set(CMAKE_ASM_FLAGS "-march=armv8-a")
+
+# cache flags
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "c flags")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "c++ flags")
+set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS}" CACHE STRING "asm flags")

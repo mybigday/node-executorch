@@ -7,7 +7,7 @@ project(node-executorch)
 set(CMAKE_CXX_STANDARD 17)
 
 if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE Release)
 endif()
 
 if(NOT DEFINED napi_build_version)
@@ -15,8 +15,6 @@ if(NOT DEFINED napi_build_version)
 endif()
 add_definitions(-DNAPI_VERSION=${napi_build_version})
 message(STATUS "NAPI_VERSION: ${napi_build_version}")
-
-set(CMAKE_SYSTEM_PROCESSOR ${NODE_ARCH})
 string(TOLOWER ${CMAKE_SYSTEM_NAME} PLATFORM)
 string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} ARCH)
 
@@ -39,36 +37,8 @@ set(OUTPUT_BIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin/${PLATFORM}/${ARCH})
 message(STATUS "Platform: ${PLATFORM}")
 message(STATUS "Arch: ${ARCH}")
 
-# This is the funtion to use -Wl, --whole-archive to link static library NB:
-# target_link_options is broken for this case, it only append the interface link
-# options of the first library.
-function(kernel_link_options target_name)
-  # target_link_options(${target_name} INTERFACE
-  # "$<LINK_LIBRARY:WHOLE_ARCHIVE,target_name>")
-  target_link_options(
-    ${target_name} INTERFACE "SHELL:LINKER:--whole-archive \
-    $<TARGET_FILE:${target_name}> \
-    LINKER:--no-whole-archive"
-  )
-endfunction()
-
-# Same as kernel_link_options but it's for MacOS linker
-function(macos_kernel_link_options target_name)
-  target_link_options(
-    ${target_name} INTERFACE
-    "SHELL:LINKER:-force_load,$<TARGET_FILE:${target_name}>"
-  )
-endfunction()
-
-# Ensure that the load-time constructor functions run. By default, the linker
-# would remove them since there are no other references to them.
-function(target_link_options_shared_lib target_name)
-  if(APPLE)
-    macos_kernel_link_options(${target_name})
-  else()
-    kernel_link_options(${target_name})
-  endif()
-endfunction()
+include(FetchContent)
+include(cmake/Utils.cmake)
 
 file(
   GLOB SOURCES
@@ -81,8 +51,19 @@ file(
   src/utils.cpp
 )
 
+if(MINGW)
+  if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+    string(REPLACE "/DELAYLOAD:NODE.EXE" "" CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS})
+  endif()
+  list(APPEND SOURCES src/delay.cc)
+
+  if(NOT CMAKE_JS_NODELIB_TARGET)
+    set(CMAKE_JS_NODELIB_TARGET "${CMAKE_BINARY_DIR}/node.lib")
+  endif()
+  download_node_lib("21.0.0" ${ARCH} ${CMAKE_JS_NODELIB_TARGET})
+endif()
+
 if(NOT EXECUTORCH_SRC_ROOT)
-  include(FetchContent)
   FetchContent_Declare(
     executorch
     GIT_REPOSITORY https://github.com/pytorch/executorch.git
@@ -173,6 +154,48 @@ if(TARGET qnn_executorch_backend)
     COMMAND ${CMAKE_COMMAND} -E copy ${LIB_qnn_executorch_backend} ${OUTPUT_BIN_DIR}
     COMMENT "Copying assets"
   )
+  if(QNN_SDK_ROOT)
+    # copy QNN SDK libraries
+    set(QNN_PLATFORM "")
+    if(WIN32 AND ARCH STREQUAL "arm64")
+      set(QNN_PLATFORM "aarch64-windows-msvc")
+    elseif(LINUX AND ARCH STREQUAL "arm64")
+      set(QNN_PLATFORM "aarch64-ubuntu-gcc9.4")
+    endif()
+    if(QNN_PLATFORM)
+      file(
+        GLOB QNN_LIBS
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/libQnnSystem.so
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/libQnnSaver.so
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/libQnnCpu.so
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/libQnnDsp.so
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/libQnnDspV66Stub.so
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/libQnnHtp.so
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/libQnnHtpPrepare.so
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/libQnnHtpV68Stub.so
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/QnnSystem.dll
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/QnnSaver.dll
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/QnnCpu.dll
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/QnnDsp.dll
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/QnnDspV66Stub.dll
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/QnnHtp.dll
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/QnnHtpPrepare.dll
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/QnnHtpV68Stub.dll
+        ${QNN_SDK_ROOT}/lib/${QNN_PLATFORM}/QnnHtpV73Stub.dll
+        ${QNN_SDK_ROOT}/lib/hexagon-v66/unsigned/libQnnHtpV66Skel.so
+        ${QNN_SDK_ROOT}/lib/hexagon-v68/unsigned/libQnnHtpV68Skel.so
+        ${QNN_SDK_ROOT}/lib/hexagon-v73/unsigned/libQnnHtpV73Skel.so
+        ${QNN_SDK_ROOT}/lib/hexagon-v73/unsigned/libqnnhtpv73.cat
+
+      )
+      add_custom_command(
+        TARGET copy_assets
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy ${QNN_LIBS} ${OUTPUT_BIN_DIR}
+        COMMENT "Copying assets"
+      )
+    endif()
+  endif()
 endif()
 
 # MPS backend
@@ -191,22 +214,23 @@ if(TARGET mpsdelegate)
 endif()
 
 include_directories(
-  ${CMAKE_JS_INC}
   ${executorch_INCLUDE_DIRS}
   "${EXECUTORCH_SRC_ROOT}/.."
+  ${CMAKE_JS_INC}
 )
-add_library(${PROJECT_NAME} SHARED ${SOURCES})
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  add_compile_options(-O3)
+endif()
+
+add_library(${PROJECT_NAME} SHARED ${SOURCES} ${CMAKE_JS_SRC})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 target_link_libraries(
   ${PROJECT_NAME}
-  ${CMAKE_JS_LIB}
   ${link_libraries}
+  ${CMAKE_JS_LIB}
+  ${CMAKE_JS_NODELIB_TARGET}
 )
-
-if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
-    # Generate node.lib
-    execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAGS})
-endif()
 
 add_dependencies(copy_assets ${PROJECT_NAME})
 
