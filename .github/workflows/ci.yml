@@ -38,7 +38,7 @@ jobs:
         pip install tomli zstd setuptools wheel
         pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
         PYTHON_EXECUTABLE=python \
-        CMAKE_ARGS="-DEXECUTORCH_BUILD_XNNPACK=ON" \
+        CMAKE_ARGS="-DEXECUTORCH_BUILD_XNNPACK=ON -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON" \
         ./.ci/scripts/setup-linux.sh cmake
         cmake --install cmake-out --prefix cmake-out
     - name: Install dependencies
