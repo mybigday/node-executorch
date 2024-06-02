@@ -1,6 +1,6 @@
 {
   "name": "node-executorch",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Node.js binding for ExecuTorch",
   "main": "lib/index.js",
   "scripts": {
