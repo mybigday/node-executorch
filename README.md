@@ -27,18 +27,24 @@ model.dispose();
 
 # Build From Source
 
-Requirements:
+Note: For Windows currently only support cross-compile.
 
-- clang
-- w32-mingw (This project only support cross compile windows)
-
+1. Fetch ExecuTorch Source
+2. Build ExecuTorch and install to any path
+3. Build this project
 
 ```sh
+# Install dependency
+yarn
+
+# Build
+yarn build --CDCMAKE_PREFIX_PATH=/path/to/install/dir \
+  --CDEXECUTORCH_SRC_ROOT=/path/to/executorch/src_root
 ```
 
 ## License
 
-3-Clause BSD
+BSD
 
 ---
 
