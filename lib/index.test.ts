@@ -39,13 +39,13 @@ it("Tensor", async () => {
   const input = new Tensor("float32", [3, 2], new Float32Array([1, 2, 3, 4, 5, 6]));
 
   // slice
-  const slice = input.slice([null, [1, null]]);
+  const slice = input.slice(null, [1, null]);
   expect(slice.dtype).toBe("float32");
   expect(slice.shape).toEqual([3, 1]);
   expect(slice.data).toMatchSnapshot();
 
-  // setIndex
-  slice.setIndex([0, 0], 0);
+  // setValue
+  slice.setValue([0, 0], 0);
   expect(slice.data).toMatchSnapshot();
 
   // concat

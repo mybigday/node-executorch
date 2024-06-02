@@ -1,3 +1,4 @@
+#include "common.h"
 #include "Module.h"
 #include "utils.h"
 #include <string>
@@ -136,22 +137,16 @@ Module::Module(const Napi::CallbackInfo &info)
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
-  if (info.Length() < 1 || !info[0].IsExternal()) {
-    Napi::TypeError::New(env, "Expected an external")
-        .ThrowAsJavaScriptException();
-    return;
-  }
+  THROW_IF_NOT(env, info.Length() >= 1 && info[0].IsExternal(),
+                     "Expected an external");
 
   auto module = info[0].As<Napi::External<ModuleHolder>>();
   module_.reset(std::move(module.Data()));
 
   auto method_names = (*module_)->method_names();
-  if (!method_names.ok()) {
-    Napi::Error::New(env, "Failed to get method names: " +
-                              errorString(method_names.error()))
-        .ThrowAsJavaScriptException();
-    return;
-  }
+  THROW_IF_NOT(env, method_names.ok(),
+                     "Failed to get method names: " +
+                          errorString(method_names.error()));
   method_names_ = method_names.get();
 }
 
@@ -160,15 +155,9 @@ Napi::Value Module::Execute(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
-  if (!module_) {
-    Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
-  if (info.Length() < 1 || !info[0].IsString()) {
-    Napi::TypeError::New(env, "Expected a string").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
+  RETURN_IF_NOT(env, module_ != nullptr, "Module is disposed");
+  RETURN_IF_NOT(env, info.Length() >= 1 && info[0].IsString(),
+                "Argument 0 must be a string");
 
   std::string method = info[0].As<Napi::String>().Utf8Value();
   if (method_names_.count(method) == 0) {
@@ -176,6 +165,7 @@ Napi::Value Module::Execute(const Napi::CallbackInfo &info) {
   }
 
   if (info.Length() > 1) {
+    RETURN_IF_NOT(env, info[1].IsArray(), "Argument 1 must be an array");
     std::vector<torch::executor::EValue> inputs;
     auto inputsArray = info[1].As<Napi::Array>();
     for (size_t i = 0; i < inputsArray.Length(); i++) {
@@ -196,10 +186,8 @@ Napi::Value Module::Load(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
-  if (info.Length() < 1 || !info[0].IsString()) {
-    Napi::TypeError::New(env, "Expected a string").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
+  RETURN_IF_NOT(env, info.Length() >= 1 && info[0].IsString(),
+                "Argument 0 must be a string");
 
   std::string path = info[0].As<Napi::String>().Utf8Value();
   auto worker = new LoadWorker(env, path);
@@ -211,15 +199,9 @@ Napi::Value Module::LoadMethod(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
-  if (!module_) {
-    Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
-  if (info.Length() < 1 || !info[0].IsString()) {
-    Napi::TypeError::New(env, "Expected a string").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
+  RETURN_IF_NOT(env, module_ != nullptr, "Module is disposed");
+  RETURN_IF_NOT(env, info.Length() >= 1 && info[0].IsString(),
+                "Argument 0 must be a string");
 
   std::string method = info[0].As<Napi::String>().Utf8Value();
   if (method_names_.count(method) == 0) {
@@ -238,20 +220,11 @@ Napi::Value Module::Forward(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
-  if (!module_) {
-    Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
-  if (method_names_.count("forward") == 0) {
-    return env.Undefined();
-  }
-
-  if (info.Length() < 1 || !info[0].IsArray()) {
-    Napi::TypeError::New(env, "Expected input array")
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
+  RETURN_IF_NOT(env, module_ != nullptr, "Module is disposed");
+  RETURN_IF_NOT(env, method_names_.count("forward") > 0,
+                "Method 'forward' is not available");
+  RETURN_IF_NOT(env, info.Length() >= 1 && info[0].IsArray(),
+                "Argument 0 must be an array");
 
   std::vector<torch::executor::EValue> inputs;
   auto inputsArray = info[0].As<Napi::Array>();
@@ -268,26 +241,18 @@ Napi::Value Module::GetMethodNames(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
-  if (!module_) {
-    Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
+  RETURN_IF_NOT(env, module_ != nullptr, "Module is disposed");
 
   auto result = (*module_)->method_names();
-  if (result.ok()) {
-    auto names = result.get();
-    auto js_results = Napi::Array::New(env, names.size());
-    size_t i = 0;
-    for (const auto &name : names) {
-      js_results.Set(i++, Napi::String::New(env, name));
-    }
-    return js_results;
-  } else {
-    Napi::Error::New(env, "Failed to get method names: " +
-                              errorString(result.error()))
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
+  RETURN_IF_NOT(env, result.ok(), "Failed to get method names: " +
+                                      errorString(result.error()));
+  auto names = result.get();
+  auto js_results = Napi::Array::New(env, names.size());
+  size_t i = 0;
+  for (const auto &name : names) {
+    js_results.Set(i++, Napi::String::New(env, name));
   }
+  return js_results;
 }
 
 Napi::Value toNapiValue(const Napi::Env &env, const torch::executor::TensorInfo &tensor_info) {
@@ -344,15 +309,9 @@ Napi::Value Module::GetMethodMeta(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
-  if (!module_) {
-    Napi::TypeError::New(env, "Module is disposed").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
-
-  if (info.Length() < 1 || !info[0].IsString()) {
-    Napi::TypeError::New(env, "Expected a string").ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
+  RETURN_IF_NOT(env, module_ != nullptr, "Module is disposed");
+  RETURN_IF_NOT(env, info.Length() >= 1 && info[0].IsString(),
+                "Argument 0 must be a string");
 
   std::string method = info[0].As<Napi::String>().Utf8Value();
   if (method_names_.count(method) == 0) {
@@ -360,12 +319,8 @@ Napi::Value Module::GetMethodMeta(const Napi::CallbackInfo &info) {
   }
 
   auto result = (*module_)->method_meta(method);
-  if (!result.ok()) {
-    Napi::Error::New(env, "Failed to get method meta: " +
-                              errorString(result.error()))
-        .ThrowAsJavaScriptException();
-    return env.Undefined();
-  }
+  RETURN_IF_NOT(env, result.ok(), "Failed to get method meta: " +
+                                      errorString(result.error()));
   auto meta = result.get();
   return toNapiValue(env, meta);
 }

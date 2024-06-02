@@ -25,8 +25,8 @@ interface TensorImpl {
   get dtype(): DType;
   get shape(): number[];
   get data(): TensorData;
-  setIndex(position: Array<number>, data: number | boolean): void
-  slice(slice_position: Array<Optional<Optional<number>[]>>): TensorImpl;
+  setValue(position: Array<number>, data: number | boolean): void
+  slice(...slice_position: Array<Optional<Array<Optional<number>>|number>>): TensorImpl;
   reshape(shape: number[]): TensorImpl;
   dispose(): void;
 }

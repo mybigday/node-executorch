@@ -25,6 +25,17 @@ input.dispose();
 model.dispose();
 ```
 
+# Build From Source
+
+Requirements:
+
+- clang
+- w32-mingw (This project only support cross compile windows)
+
+
+```sh
+```
+
 ## License
 
 3-Clause BSD

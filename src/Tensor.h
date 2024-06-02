@@ -33,10 +33,9 @@ protected:
   Napi::Value Dtype(const Napi::CallbackInfo &info);
   Napi::Value GetData(const Napi::CallbackInfo &info);
   void SetData(const Napi::CallbackInfo &info, const Napi::Value &value);
-  void SetIndex(const Napi::CallbackInfo &info);
+  void SetValue(const Napi::CallbackInfo &info);
   Napi::Value Slice(const Napi::CallbackInfo &info);
   Napi::Value Reshape(const Napi::CallbackInfo &info);
-  Napi::Value Expand(const Napi::CallbackInfo &info); // expand(tensor, size)
   void Dispose(const Napi::CallbackInfo &info);
 
   static Napi::Value Concat(const Napi::CallbackInfo &info);
