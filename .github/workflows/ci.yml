@@ -29,7 +29,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: executorch/cmake-out
-        key: ${{ runner.os }}-cmake-${{ hashFiles('executorch/CMakeLists.txt') }}
+        key: ${{ runner.os }}-cmake-${{ hashFiles('executorch/kernels/*.cpp') }}-${{ hashFiles('executorch/extension/*.cpp') }}-${{ hashFiles('executorch/backends/*.cpp') }}-${{ hashFiles('executorch/runtime/*.cpp') }}
     - name: Build executorch
       run: |
         python -m venv .venv
@@ -37,15 +37,17 @@ jobs:
         cd executorch
         pip install tomli zstd setuptools wheel
         pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
-        ./install_requirements.sh
-        cmake \
-          -S . \
-          -B cmake-out \
-          -DCMAKE_INSTALL_PREFIX=cmake-out \
-          -DEXECUTORCH_BUILD_XNNPACK=ON \
-          -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON \
-          -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON
-        cmake --build cmake-out --target install --config Release
+        if [ ! -d cmake-out ]; then
+          ./install_requirements.sh
+          cmake \
+            -S . \
+            -B cmake-out \
+            -DCMAKE_INSTALL_PREFIX=cmake-out \
+            -DEXECUTORCH_BUILD_XNNPACK=ON \
+            -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON \
+            -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON
+          cmake --build cmake-out --target install --config Release
+        fi
     - name: Install dependencies
       run: yarn install
     - name: Build
