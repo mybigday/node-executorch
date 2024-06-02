@@ -47,8 +47,11 @@ file(
   src/Module.cpp
   src/Tensor.h
   src/Tensor.cpp
+  src/Sampler.h
+  src/Sampler.cpp
   src/utils.h
   src/utils.cpp
+  "${EXECUTORCH_SRC_ROOT}/examples/models/llama2/sampler/sampler.cpp"
 )
 
 if(MINGW)

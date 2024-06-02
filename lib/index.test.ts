@@ -1,5 +1,5 @@
 import path from "path";
-import { Module, Tensor } from "./index";
+import { Module, Tensor, Sampler } from "./index";
 
 const model = path.resolve(__dirname, "__fixtures__/mul.pte");
 
@@ -59,4 +59,16 @@ it("Tensor", async () => {
   expect(input.dtype).toBe("float32");
   expect(input.shape).toEqual([2, 3]);
   expect(input.data).toMatchSnapshot();
+});
+
+it("Sampler", async () => {
+  const mockTensor = new Tensor("float32", [1, 2, 10], Float32Array.from({ length: 20 }, (_, i) => i));
+  const sampler = new Sampler(10);
+
+  // sample
+  const sample = sampler.sample(mockTensor);
+  expect(sample).toBeGreaterThanOrEqual(0);
+  expect(sample).toBeLessThan(10);
+
+  sampler.dispose();
 });

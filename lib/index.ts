@@ -66,9 +66,19 @@ interface Module {
   load(path: string): Promise<ModuleImpl>;
 }
 
+interface SamplerImpl {
+  sample(tensor: TensorImpl): number;
+  dispose(): void;
+}
+
+interface Sampler {
+  new(vocab_size: number, temperature?: number, top_p?: number, seed?: number): SamplerImpl;
+}
+
 interface Binding {
   Module: Module;
   Tensor: Tensor;
+  Sampler: Sampler;
 }
 
 const moduleBasePath = `../bin/${process.platform}/${process.arch}`;
@@ -85,3 +95,4 @@ const mod = require(`${moduleBasePath}/node-executorch.node`) as Binding;
 
 export const Module = mod.Module;
 export const Tensor = mod.Tensor;
+export const Sampler = mod.Sampler;

@@ -22,6 +22,7 @@ const std::unordered_map<std::string, exec_aten::ScalarType> dtypeMap = {
     {"int16", exec_aten::ScalarType::Short},
     {"int32", exec_aten::ScalarType::Int},
     {"int64", exec_aten::ScalarType::Long},
+    {"float16", exec_aten::ScalarType::Half},
     {"float32", exec_aten::ScalarType::Float},
     {"float64", exec_aten::ScalarType::Double},
     {"bool", exec_aten::ScalarType::Bool}};
@@ -215,72 +216,54 @@ void Tensor::SetValue(const Napi::CallbackInfo &info) {
   Napi::Env env = info.Env();
   Napi::HandleScope scope(env);
 
-  if (tensor_ == nullptr) {
-    Napi::TypeError::New(env, "Tensor is disposed").ThrowAsJavaScriptException();
-    return;
-  }
-
-  if (info.Length() < 2) {
-    Napi::TypeError::New(env, "Expected 2 arguments")
-        .ThrowAsJavaScriptException();
-    return;
-  }
-  if (!info[0].IsArray()) {
-    Napi::TypeError::New(env, "Expected array").ThrowAsJavaScriptException();
-    return;
-  }
-  if (!info[1].IsNumber() && !info[1].IsBoolean()) {
-    Napi::TypeError::New(env, "Expected number, string or boolean")
-        .ThrowAsJavaScriptException();
-    return;
-  }
+  THROW_IF_NOT(env, tensor_ != nullptr, "Tensor is disposed");
+  THROW_IF_NOT(env, info.Length() == 2, "Expected 2 arguments");
+  THROW_IF_NOT(env, info[0].IsArray(), "Argument 0 must be an array");
+  THROW_IF_NOT(env, info[1].IsNumber() || info[1].IsBoolean(), "Argument 1 must be a number or boolean");
 
   size_t pos = 0;
 
   Napi::Array jsPosition = info[0].As<Napi::Array>();
   size_t rank = tensor_->dim();
-  if (jsPosition.Length() != rank) {
-    Napi::TypeError::New(env, "Invalid position").ThrowAsJavaScriptException();
-    return;
-  }
+  THROW_IF_NOT(env, jsPosition.Length() == rank, "Invalid position");
 
   for (size_t i = 0; i < rank; i++) {
     Napi::Value value = jsPosition.Get(i);
-    if (!value.IsNumber()) {
-      Napi::TypeError::New(env, "Expected number").ThrowAsJavaScriptException();
-      return;
-    }
+    THROW_IF_NOT(env, value.IsNumber(), "Position must be a number");
     pos += value.ToNumber().Int32Value() * (i == 0 ? 1 : tensor_->size(i - 1));
   }
 
   void *data = tensor_->mutable_data_ptr();
   switch (tensor_->scalar_type()) {
   case exec_aten::ScalarType::Byte:
-    reinterpret_cast<uint8_t *>(data)[pos] =
+    static_cast<uint8_t *>(data)[pos] =
         (uint8_t)info[1].ToNumber().Int32Value();
     break;
   case exec_aten::ScalarType::Char:
-    reinterpret_cast<int8_t *>(data)[pos] =
+    static_cast<int8_t *>(data)[pos] =
         (int8_t)info[1].ToNumber().Int32Value();
     break;
   case exec_aten::ScalarType::Short:
-    reinterpret_cast<int16_t *>(data)[pos] =
+    static_cast<int16_t *>(data)[pos] =
         (int16_t)info[1].ToNumber().Int32Value();
     break;
   case exec_aten::ScalarType::Int:
-    reinterpret_cast<int32_t *>(data)[pos] = info[1].ToNumber().Int32Value();
+    static_cast<int32_t *>(data)[pos] = info[1].ToNumber().Int32Value();
     break;
   case exec_aten::ScalarType::Long:
-    reinterpret_cast<int64_t *>(data)[pos] = info[1].ToNumber().Int64Value();
+    static_cast<int64_t *>(data)[pos] = info[1].ToNumber().Int64Value();
     break;
   case exec_aten::ScalarType::Float:
-    reinterpret_cast<float *>(data)[pos] = info[1].ToNumber().FloatValue();
+    static_cast<float *>(data)[pos] = info[1].ToNumber().FloatValue();
+    break;
+  case exec_aten::ScalarType::Half:
+    static_cast<exec_aten::Half *>(data)[pos] = info[1].ToNumber().FloatValue();
     break;
   case exec_aten::ScalarType::Double:
-    reinterpret_cast<double *>(data)[pos] = info[1].ToNumber().DoubleValue();
+    static_cast<double *>(data)[pos] = info[1].ToNumber().DoubleValue();
     break;
   case exec_aten::ScalarType::Bool:
-    reinterpret_cast<bool *>(data)[pos] = info[1].ToBoolean().Value();
+    static_cast<bool *>(data)[pos] = info[1].ToBoolean().Value();
     break;
   default:
     throw std::runtime_error("Unsupported dtype");
@@ -456,7 +439,7 @@ Napi::Value Tensor::Reshape(const Napi::CallbackInfo &info) {
     dims[i] = value.ToNumber().Int32Value();
     n_elem *= dims[i];
   }
-  RETURN_IF_NOT(env, n_elem == tensor_->numel(), "Invalid shape");
+  RETURN_IF_NOT(env, n_elem == tensor_->numel(), "Expected the same number of elements");
 
   tensor_ = std::make_unique<exec_aten::Tensor>(
       new exec_aten::TensorImpl(tensor_->scalar_type(), rank, dims, tensor_->mutable_data_ptr()));
