@@ -1,0 +1,22 @@
+[package]
+name = "node-executorch"
+version = "0.1.0-alpha.1"
+description = "Node.js binding for ExecuTorch"
+authors = ["Hans <hans.chen@bricks.tools>"]
+license = "BSD-3-Clause"
+edition = "2021"
+exclude = ["index.node"]
+build = "build.rs"
+
+[lib]
+crate-type = ["cdylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+neon = { version = "1", default-features = false, features = ["napi-6"] }
+cpp = "0.5"
+cpp_macros = "0.5"
+
+[build-dependencies]
+cpp_build = "0.5"
