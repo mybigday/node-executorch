@@ -20,11 +20,6 @@ jobs:
       with:
         path: .venv
         key: ${{ runner.os }}-venv-3_10
-    - uses: actions/checkout@v4
-      with:
-        repository: pytorch/executorch
-        path: executorch
-        submodules: recursive
     - name: Cached build
       uses: actions/cache@v2
       with:
@@ -51,6 +46,6 @@ jobs:
     - name: Install dependencies
       run: yarn install
     - name: Build
-      run: yarn build --CDCMAKE_PREFIX_PATH=$(realpath executorch/cmake-out) --CDEXECUTORCH_SRC_ROOT=$(realpath executorch)
+      run: yarn build
     - name: Run tests
       run: yarn test
