@@ -10,8 +10,10 @@
     "prepack": "npm run build-js",
     "cargo-build": "cargo build --message-format=json > cargo.log",
     "cross-build": "cross build --message-format=json > cross.log",
-    "postcargo-build": "neon dist < cargo.log",
-    "postcross-build": "neon dist -m /target < cross.log",
+    "postcargo-build": "yarn neon-dist < cargo.log",
+    "postcross-build": "yarn neon-dist -m /target < cross.log",
+    "neon-dist": "neon dist --name node_executorch",
+    "postneon-dist": "node ./scripts/postneon-dist.js",
     "debug": "yarn cargo-build",
     "build": "yarn cargo-build --release",
     "cross": "yarn cross-build --release"
