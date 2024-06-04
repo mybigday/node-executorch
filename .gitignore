@@ -1,5 +1,8 @@
 target
 *.node
+*.so
+*.dll
+*.dylib
 **/node_modules
 **/.DS_Store
 npm-debug.log

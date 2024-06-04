@@ -36,10 +36,27 @@ fn main() {
     println!("cargo:rerun-if-changed=src/sampler.rs");
     println!("cargo:rerun-if-changed=src/tensor.rs");
 
-    let base_path = std::env::var("EXECUTORCH_INSTALL_PREFIX").unwrap_or_else(|_| "executorch/cmake-out".to_string());
-    let lib_path = Path::new(&base_path).join("lib");
+    let install_prefix = std::env::var("EXECUTORCH_INSTALL_PREFIX").unwrap_or_else(|_| "executorch/cmake-out".to_string());
+    let lib_path = Path::new(&install_prefix).join("lib");
+    
+    let node_platform = match std::env::var("CARGO_CFG_TARGET_OS").unwrap().as_str() {
+        "linux" => "linux",
+        "macos" => "darwin",
+        "windows" => "win32",
+        _ => panic!("Unsupported platform"),
+    };
+    let node_arch = match std::env::var("CARGO_CFG_TARGET_ARCH").unwrap().as_str() {
+        "x86_64" => "x64",
+        "aarch64" => "arm64",
+        _ => panic!("Unsupported arch"),
+    };
 
     println!("cargo:rustc-link-search=native={}", lib_path.display());
+
+    // for nodejs release
+    println!("cargo:rustc-link-arg=-Wl,-rpath,bin/{}/{}", node_platform, node_arch);
+    println!("cargo:rustc-link-arg=-Wl,-rpath,node_modules/bin/{}/{}", node_platform, node_arch);
+    println!("cargo:rustc-link-arg=-Wl,-rpath,resources/node_modules/bin/{}/{}", node_platform, node_arch);
     
     assert!(link_lib(&lib_path, "executorch", false).is_ok());
     assert!(link_lib(&lib_path, "extension_module", false).is_ok());
@@ -49,7 +66,7 @@ fn main() {
     if link_lib(&lib_path, "optimized_native_cpu_ops_lib", true).is_ok() {
         assert!(link_lib(&lib_path, "optimized_kernels", false).is_ok());
         assert!(link_lib(&lib_path, "portable_kernels", false).is_ok());
-        assert!(link_lib(&lib_path, "cpublas", false).is_ok());
+        // assert!(link_lib(&lib_path, "cpublas", false).is_ok());
         assert!(link_lib(&lib_path, "eigen_blas", false).is_ok());
     } else {
         assert!(link_lib(&lib_path, "portable_ops_lib", true).is_ok());
@@ -57,8 +74,8 @@ fn main() {
     }
 
     // Quantized Kernels
-    if link_lib(&lib_path, "quantized_kernels", false).is_ok() {
-        assert!(link_lib(&lib_path, "quantized_ops_lib", false).is_ok());
+    if link_lib(&lib_path, "quantized_ops_lib", true).is_ok() {
+        assert!(link_lib(&lib_path, "quantized_kernels", false).is_ok());
     }
 
     // misc.

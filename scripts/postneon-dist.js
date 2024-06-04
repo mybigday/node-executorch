@@ -39,3 +39,17 @@ if (!fs.existsSync(`bin/${platform}/${arch}`)) {
 }
 
 fs.renameSync('index.node', `bin/${platform}/${arch}/executorch.node`);
+
+const installPrefix = process.env.EXECUTORCH_INSTALL_PREFIX || 'executorch/cmake-out';
+
+const shared_libs = ['libextension_module', 'qnn_executorch_backend'];
+
+for (const lib of shared_libs) {
+  if (fs.existsSync(`${installPrefix}/lib/${lib}.so`)) {
+    fs.copyFileSync(`${installPrefix}/lib/${lib}.so`, `bin/${platform}/${arch}/${lib}.so`);
+  } else if (fs.existsSync(`${installPrefix}/lib/${lib}.dylib`)) {
+    fs.copyFileSync(`${installPrefix}/lib/${lib}.dylib`, `bin/${platform}/${arch}/${lib}.dylib`);
+  } else if (fs.existsSync(`${installPrefix}/lib/${lib}.dll`)) {
+    fs.copyFileSync(`${installPrefix}/lib/${lib}.dll`, `bin/${platform}/${arch}/${lib}.dll`);
+  }
+}
