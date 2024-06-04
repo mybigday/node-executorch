@@ -53,7 +53,7 @@ fn main() {
 
     println!("cargo:rustc-link-search=native={}", lib_path.display());
 
-    // for nodejs release
+    // for nodejs/electron usage
     println!("cargo:rustc-link-arg=-Wl,-rpath,bin/{}/{}", node_platform, node_arch);
     println!("cargo:rustc-link-arg=-Wl,-rpath,node_modules/bin/{}/{}", node_platform, node_arch);
     println!("cargo:rustc-link-arg=-Wl,-rpath,resources/node_modules/bin/{}/{}", node_platform, node_arch);
