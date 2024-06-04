@@ -1,8 +1,7 @@
-use neon::prelude::*;
+use neon::types::Finalize;
 use cpp::{cpp, cpp_class};
 
 cpp! {{
-  #include <vector>
   #include <executorch/examples/models/llama2/sampler/sampler.h>
   #include <executorch/examples/models/llama2/sampler/sampler.cpp>
 }}

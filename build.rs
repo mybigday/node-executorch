@@ -1,68 +1,82 @@
 extern crate cpp_build;
+extern crate build_target;
 use std::path::Path;
+use build_target::Os;
 
-#[cfg(target_os = "macos")]
-static SO_EXT: &str = "dylib";
-#[cfg(target_os = "linux")]
-static SO_EXT: &str = "so";
-#[cfg(target_os = "windows")]
-static SO_EXT: &str = "dll";
-
-static ET_LIBS: [&str; 16] = [
-    "extension_data_loader",
-    "mpsdelegate",
-    "qnn_executorch_backend",
-    "portable_ops_lib",
-    "extension_module",
-    "xnnpack_backend",
-    "XNNPACK",
-    "cpuinfo",
-    "pthreadpool",
-    "vulkan_backend",
-    "optimized_kernels",
-    "optimized_ops_lib",
-    "optimized_native_cpu_ops_lib",
-    "quantized_kernels",
-    "quantized_ops_lib",
-    "custom_ops",
-];
+fn link_lib(lib_path: &Path, lib: &str, whole_link: bool) -> Result<(), ()> {
+    let so_ext = match build_target::target_os().unwrap() {
+        Os::Linux => "so",
+        Os::MacOs => "dylib",
+        Os::Windows => "dll",
+        _ => panic!("Unsupported OS"),
+    };
+    let filename = match lib {
+        "extension_module" => format!("lib{}.{}", lib, so_ext),
+        "qnn_executorch_backend" => format!("lib{}.{}", lib, so_ext),
+        _ => format!("lib{}.a", lib),
+    };
+    if lib_path.join(&filename).exists() {
+        if filename.ends_with(so_ext) {
+            println!("cargo:rustc-link-lib=dylib={}", lib);
+        } else {
+            if whole_link {
+                println!("cargo:rustc-link-lib=static:+whole-archive={}", lib);
+            } else {
+                println!("cargo:rustc-link-lib=static={}", lib);
+            }
+        }
+        return Ok(());
+    } else {
+        eprintln!("{} not found", filename);
+    }
+    Err(())
+}
 
 fn main() {
-    let base_path_str = std::env::var("EXECUTORCH_INSTALL_PREFIX").unwrap_or_else(|_| "executorch/cmake-out".to_string());
-    let lib_path = Path::new(&base_path_str).join("lib");
-
-    let mut lib_paths: Vec<String> = Vec::new();
-    for lib in ET_LIBS {
-        let filename = match lib {
-            "extension_module" => format!("lib{}.{}", lib, SO_EXT),
-            "qnn_executorch_backend" => format!("lib{}.{}", lib, SO_EXT),
-            _ => format!("lib{}.a", lib),
-        };
-        if lib_path.join(&filename).exists() {
-            lib_paths.push(filename);
-        }
-    }
-
-    assert!(!lib_paths.is_empty(), "No lib files found in executorch/cmake-out/lib");
-
-    let mut config = cpp_build::Config::new();
-    config.flag("-std=c++17");
-
-    for lib in lib_paths {
-        config.flag(&format!("-Wl,--whole-archive -l{} -Wl,--no-whole-archive", lib.trim_start_matches("lib").trim_end_matches(".a")));
-        // if lib.ends_with(SO_EXT) {
-        //     // println!("cargo:rustc-link-lib=dylib={}", lib.trim_start_matches("lib").trim_end_matches(SO_EXT));
-        // } else {
-        //     config.flag(&format!("--whole-archive -l{} --no-whole-archive", lib));
-        //     // println!("cargo:rustc-link-lib=static={}", lib.trim_start_matches("lib").trim_end_matches(".a"));
-        // }
-    }
-    // println!("cargo:rustc-link-search=native={}", lib_path.display());
-
-    config.flag(&format!("-L{}", lib_path.display()));
-    
-    config.build("src/lib.rs");
-
-    // tip rebuild if the library changes
     println!("cargo:rerun-if-changed=src/sampler.rs");
+    println!("cargo:rerun-if-changed=src/tensor.rs");
+
+    let base_path = std::env::var("EXECUTORCH_INSTALL_PREFIX").unwrap_or_else(|_| "executorch/cmake-out".to_string());
+    let lib_path = Path::new(&base_path).join("lib");
+
+    println!("cargo:rustc-link-search=native={}", lib_path.display());
+    
+    assert!(link_lib(&lib_path, "executorch", false).is_ok());
+    assert!(link_lib(&lib_path, "extension_module", false).is_ok());
+    assert!(link_lib(&lib_path, "extension_data_loader", false).is_ok());
+
+    // Optimized Kernels
+    if link_lib(&lib_path, "optimized_native_cpu_ops_lib", true).is_ok() {
+        assert!(link_lib(&lib_path, "optimized_kernels", false).is_ok());
+        assert!(link_lib(&lib_path, "portable_kernels", false).is_ok());
+        assert!(link_lib(&lib_path, "cpublas", false).is_ok());
+        assert!(link_lib(&lib_path, "eigen_blas", false).is_ok());
+    } else {
+        assert!(link_lib(&lib_path, "portable_ops_lib", true).is_ok());
+        assert!(link_lib(&lib_path, "portable_kernels", false).is_ok());
+    }
+
+    // Quantized Kernels
+    if link_lib(&lib_path, "quantized_kernels", false).is_ok() {
+        assert!(link_lib(&lib_path, "quantized_ops_lib", false).is_ok());
+    }
+
+    // misc.
+    let _ = link_lib(&lib_path, "cpuinfo", false);
+    let _ = link_lib(&lib_path, "pthreadpool", false);
+
+    // XNNPACK
+    if link_lib(&lib_path, "xnnpack_backend", true).is_ok() {
+        assert!(link_lib(&lib_path, "XNNPACK", false).is_ok());
+    }
+
+    // Vulkan
+    let _ = link_lib(&lib_path, "vulkan_backend", true);
+
+    // QNN
+    let _ = link_lib(&lib_path, "qnn_executorch_backend", true);
+
+    cpp_build::Config::new()
+        .flag("-std=c++17")
+        .build("src/lib.rs");
 }

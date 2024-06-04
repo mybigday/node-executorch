@@ -1,33 +1,90 @@
-use neon::prelude::*;
+use neon::types::Finalize;
 use cpp::{cpp, cpp_class};
 
 cpp! {{
-  #include <vector>
-  #include <executorch/examples/models/llama2/sampler/sampler.h>
+  #include <executorch/runtime/core/exec_aten/exec_aten.h>
 }}
 
-cpp_class!(pub unsafe struct Sampler as "torch::executor::Sampler");
-
-impl Sampler {
-  pub fn new(vocab_size: i32, temperature: f32, topp: f32, rng_seed: u64) -> Self {
-      unsafe {
-          cpp!([vocab_size as "int", temperature as "float", topp as "float", rng_seed as "uint64_t"] -> Sampler as "torch::executor::Sampler" {
-              return torch::executor::Sampler(vocab_size, temperature, topp, rng_seed);
-          })
-      }
-  }
-
-  pub fn sample(&self, param : Vec<f32>) -> i32 {
-      unsafe {
-          cpp!([self as "torch::executor::Sampler*", param as "std::vector<float>"] -> i32 as "int32_t" {
-              auto data = new float[param.size()];
-              memcpy(data, param.data(), param.size() * sizeof(float));
-              auto result = self->sample(data);
-              delete[] data;
-              return result;
-          })
-      }
-  }
+pub enum TensorType {
+    UInt8 = 0,
+    Int8 = 1,
+    Int16 = 2,
+    Int32 = 3,
+    Int64 = 4,
+    // Float16 = 5,
+    Float32 = 6,
+    Float64 = 7,
+    Bool = 11,
 }
 
-impl Finalize for Sampler {}
+impl From<i32> for TensorType {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => TensorType::UInt8,
+            1 => TensorType::Int8,
+            2 => TensorType::Int16,
+            3 => TensorType::Int32,
+            4 => TensorType::Int64,
+            6 => TensorType::Float32,
+            7 => TensorType::Float64,
+            11 => TensorType::Bool,
+            _ => panic!("Invalid dtype"),
+        }
+    }
+}
+
+cpp_class!(unsafe struct AtenTensor as "exec_aten::Tensor");
+
+impl AtenTensor {
+    fn new<T>(dtype: TensorType, dim: i64, shape: *mut i32, data: *mut T) -> Self {
+        let dtype_num = dtype as i32;
+        unsafe {
+            cpp!([dtype_num as "int32_t", dim as "ssize_t", shape as "int32_t*", data as "void*"] -> AtenTensor as "exec_aten::Tensor" {
+                auto tensor_impl = new exec_aten::TensorImpl(
+                    static_cast<exec_aten::ScalarType>(dtype_num),
+                    dim,
+                    shape,
+                    data
+                );
+                return exec_aten::Tensor(tensor_impl);
+            })
+        }
+    }
+
+    fn dim(&self) -> i64 {
+        unsafe {
+            cpp!([self as "exec_aten::Tensor*"] -> i64 as "ssize_t" {
+                return self->dim();
+            })
+        }
+    }
+}
+
+pub struct Tensor<T> {
+    tensor: AtenTensor,
+    data: Vec<T>,
+    shape: Vec<i32>,
+}
+
+impl<T> Tensor<T> {
+    pub fn dim(&self) -> i64 {
+        self.tensor.dim()
+    }
+}
+
+impl<T> Finalize for Tensor<T> {}
+
+// u8
+impl Tensor<u8> {
+    pub fn new(mut shape: Vec<i32>, mut  data: Vec<u8>) -> Self {
+        let dim = shape.len() as i64;
+        let shape_ptr = shape.as_mut_ptr();
+        let data_ptr = data.as_mut_ptr();
+        let tensor = AtenTensor::new(TensorType::UInt8, dim, shape_ptr, data_ptr);
+        Tensor {
+            tensor,
+            data,
+            shape,
+        }
+    }
+}
