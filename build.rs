@@ -62,4 +62,7 @@ fn main() {
     config.flag(&format!("-L{}", lib_path.display()));
     
     config.build("src/lib.rs");
+
+    // tip rebuild if the library changes
+    println!("cargo:rerun-if-changed=src/sampler.rs");
 }

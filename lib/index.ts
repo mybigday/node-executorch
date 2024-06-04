@@ -66,19 +66,11 @@ interface Module {
   load(path: string): Promise<ModuleImpl>;
 }
 
-interface SamplerImpl {
-  sample(tensor: TensorImpl): number;
-  dispose(): void;
-}
-
-interface Sampler {
-  new(vocab_size: number, temperature?: number, top_p?: number, seed?: number): SamplerImpl;
-}
+type ExternalObject = any;
 
 interface Binding {
-  Module: Module;
-  Tensor: Tensor;
-  Sampler: Sampler;
+  createSampler(vocab_size: number, temperature: number, top_p: number, seed: number): ExternalObject;
+  samplerSample(ptr: ExternalObject, vector: number[]): number;
 }
 
 const moduleBasePath = `../bin/${process.platform}/${process.arch}`;
@@ -91,8 +83,18 @@ if (process.platform === "linux") {
   process.env.PATH = `${moduleBasePath};${process.env.PATH}`;
 }
 
-const mod = require(`${moduleBasePath}/node-executorch.node`) as Binding;
+const mod = require(`${moduleBasePath}/executorch.node`) as Binding;
 
-export const Module = mod.Module;
-export const Tensor = mod.Tensor;
-export const Sampler = mod.Sampler;
+class Sampler {
+  ptr: ExternalObject;
+
+  constructor(vocab_size: number, temperature: number = 0.7, topP: number = 0.9, seed?: number) {
+    this.ptr = mod.createSampler(vocab_size, temperature, topP, seed ?? Math.floor(Math.random() * 1000000));
+  }
+
+  sample(vector: number[]) {
+    return mod.samplerSample(this.ptr, vector);
+  }
+}
+
+export { Sampler };

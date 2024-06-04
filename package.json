@@ -4,9 +4,10 @@
   "description": "Node.js binding for ExecuTorch",
   "main": "lib/index.js",
   "scripts": {
-    "test": "cargo test",
-    "test-js": "jest",
     "build-js": "tsc",
+    "test-all": "yarn test-rs && yarn test",
+    "test": "jest",
+    "test-rs": "cargo test",
     "prepack": "npm run build-js",
     "cargo-build": "cargo build --message-format=json > cargo.log",
     "cross-build": "cross build --message-format=json > cross.log",

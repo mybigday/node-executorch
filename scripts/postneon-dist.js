@@ -34,8 +34,8 @@ if (content[0] === 0x7f && content[1] === 0x45 && content[2] === 0x4c && content
   }
 }
 
-if (!fs.existsSync('bin')) {
-  fs.mkdirSync('bin');
+if (!fs.existsSync(`bin/${platform}/${arch}`)) {
+  fs.mkdirSync(`bin/${platform}/${arch}`, { recursive: true });
 }
 
-fs.renameSync('index.node', `bin/${platform}-${arch}.node`);
+fs.renameSync('index.node', `bin/${platform}/${arch}/executorch.node`);
