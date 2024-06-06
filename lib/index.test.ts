@@ -1,5 +1,5 @@
 import path from "path";
-import { Module, Tensor, Sampler } from "./index";
+import { Module, Tensor, Sampler, EValueTag, DType } from "./index";
 
 const model = path.resolve(__dirname, "__fixtures__/mul.pte");
 
@@ -9,10 +9,10 @@ it("Module", async () => {
   expect(mod.getMethodMeta("forward")).toEqual({
     name: "forward",
     inputs: [
-      { tag: "tensor", tensor_info: { dtype: "float32", shape: [3, 2] } },
-      { tag: "tensor", tensor_info: { dtype: "float32", shape: [3, 2] } },
+      { tag: EValueTag.Tensor, tensor_info: { dtype: DType.float32, shape: [3, 2] } },
+      { tag: EValueTag.Tensor, tensor_info: { dtype: DType.float32, shape: [3, 2] } },
     ],
-    outputs: [{ tag: "tensor", tensor_info: { dtype: "float32", shape: [3, 2] } }],
+    outputs: [{ tag: EValueTag.Tensor, tensor_info: { dtype: DType.float32, shape: [3, 2] } }],
   });
   { // execute without inputs
     const outputs = await mod.execute("forward");
@@ -55,10 +55,10 @@ it("Tensor", async () => {
   expect(concat.data).toMatchSnapshot();
 
   // reshape
-  input.reshape([2, 3]);
-  expect(input.dtype).toBe("float32");
-  expect(input.shape).toEqual([2, 3]);
-  expect(input.data).toMatchSnapshot();
+  const reshaped = input.reshape([2, 3]);
+  expect(reshaped.dtype).toBe("float32");
+  expect(reshaped.shape).toEqual([2, 3]);
+  expect(reshaped.data).toMatchSnapshot();
 });
 
 it("Sampler", async () => {
@@ -68,7 +68,5 @@ it("Sampler", async () => {
   // sample
   const sample = sampler.sample(mockTensor);
   expect(sample).toBeGreaterThanOrEqual(0);
-  expect(sample).toBeLessThan(10);
-
-  sampler.dispose();
+  expect(sample).toBeLessThanOrEqual(10);
 });

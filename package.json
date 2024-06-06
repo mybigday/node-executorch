@@ -4,38 +4,49 @@
   "description": "Node.js binding for ExecuTorch",
   "main": "lib/index.js",
   "scripts": {
-    "test": "jest",
     "build-js": "tsc",
-    "build": "cmake-js build",
-    "prepack": "npm run build-js"
+    "test-all": "yarn test-rs && yarn test",
+    "test": "jest",
+    "test-rs": "cargo test",
+    "prepack": "npm run build-js",
+    "cargo-build": "cargo build --message-format=json > cargo.log",
+    "cross-build": "cross build --message-format=json > cross.log",
+    "postcargo-build": "yarn neon-dist < cargo.log",
+    "postcross-build": "yarn neon-dist -m /target < cross.log",
+    "neon-dist": "neon dist --name node_executorch",
+    "postneon-dist": "node ./scripts/postneon-dist.js",
+    "debug": "yarn cargo-build",
+    "build": "yarn cargo-build --release",
+    "cross": "yarn cross-build --release"
   },
   "author": "Hans <hans.chen@bricks.tools>",
   "license": "BSD-3-Clause",
-  "files": [
-    "lib",
-    "bin",
-    "src",
-    "cmake",
-    "CMakeLists.txt"
-  ],
-  "binary": {
-    "napi_versions": [
-      8
-    ]
-  },
   "devDependencies": {
     "@babel/preset-env": "^7.24.6",
     "@babel/preset-typescript": "^7.24.6",
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.12.12",
-    "cmake-js": "^7.3.0",
+    "@neon-rs/cli": "0.1.68",
     "jest": "^29.7.0",
     "typescript": "^5.4.5"
   },
-  "dependencies": {
-    "node-addon-api": "^8.0.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mybigday/node-executorch.git"
   },
+  "keywords": [
+    "executorch",
+    "ai"
+  ],
+  "bugs": {
+    "url": "https://github.com/mybigday/node-executorch/issues"
+  },
+  "homepage": "https://github.com/mybigday/node-executorch#readme",
+  "files": [
+    "lib",
+    "bin"
+  ],
   "jest": {
     "testEnvironment": "node",
     "testMatch": [

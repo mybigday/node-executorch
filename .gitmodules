@@ -1,0 +1,4 @@
+[submodule "executorch"]
+	path = executorch
+	url = https://github.com/mybigday/executorch.git
+	branch = windows-qnn

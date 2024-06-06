@@ -3,5 +3,5 @@
     "esModuleInterop": true
   },
   "include": ["lib/**/*"],
-  "exclude": ["node_modules", "executorch", "build"]
+  "exclude": ["node_modules", "executorch", "target"]
 }
