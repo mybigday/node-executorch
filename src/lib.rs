@@ -1,39 +1,35 @@
-pub mod sampler;
-pub mod tensor;
-pub mod macros;
+mod eterror;
+mod evalue;
+mod evalue_tag;
+mod macros;
+mod method_meta;
+mod module;
+mod sampler;
+mod tensor;
+mod tensor_type;
 
 use neon::prelude::*;
-use sampler::*;
-use tensor::*;
-
-fn create_u8_tensor(mut cx: FunctionContext) -> JsResult<JsBox<Tensor::<u8>>> {
-    let shape = get_arg_as_vec!(cx, 0, JsNumber, i32);
-    let data = get_arg_as_vec!(cx, 1, JsNumber, u8);
-    Ok(cx.boxed(Tensor::<u8>::new(shape, data)))
-}
-
-fn create_sampler(mut cx: FunctionContext) -> JsResult<JsBox<Sampler>> {
-    let vocab_size = cx.argument::<JsNumber>(0)?.value(&mut cx) as i32;
-    let temperature = cx.argument::<JsNumber>(1)?.value(&mut cx) as f32;
-    let topp = cx.argument::<JsNumber>(2)?.value(&mut cx) as f32;
-    let rng_seed = cx.argument::<JsNumber>(3)?.value(&mut cx) as u64;
-    Ok(cx.boxed(Sampler::new(vocab_size, temperature, topp, rng_seed)))
-}
-
-fn sampler_sample(mut cx: FunctionContext) -> JsResult<JsNumber> {
-    let sampler = cx.argument::<JsBox<Sampler>>(0)?;
-    let inputs: Vec<f32> = cx.argument::<JsArray>(1)?
-        .to_vec(&mut cx)?
-        .iter()
-        .map(|val| val.downcast::<JsNumber, _>(&mut cx).unwrap().value(&mut cx) as f32)
-        .collect();
-    Ok(cx.number(sampler.sample(inputs)))
-}
 
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
-    cx.export_function("createSampler", create_sampler)?;
-    cx.export_function("samplerSample", sampler_sample)?;
-    cx.export_function("createU8Tensor", create_u8_tensor)?;
+    // Sampler
+    cx.export_function("createSampler", sampler::create)?;
+    cx.export_function("samplerSample", sampler::sample)?;
+    // Tensor
+    cx.export_function("createTensor", tensor::create)?;
+    cx.export_function("tensorGetDtype", tensor::get_dtype)?;
+    cx.export_function("tensorGetShape", tensor::get_shape)?;
+    cx.export_function("tensorGetData", tensor::get_data)?;
+    cx.export_function("tensorSetData", tensor::set_data)?;
+    cx.export_function("tensorSetValue", tensor::set_value)?;
+    cx.export_function("tensorConcat", tensor::concat)?;
+    cx.export_function("tensorSlice", tensor::slice)?;
+    cx.export_function("tensorReshape", tensor::reshape)?;
+    // Module
+    cx.export_function("moduleLoad", module::load)?;
+    cx.export_function("moduleLoadMethod", module::load_method)?;
+    cx.export_function("moduleExecute", module::execute)?;
+    cx.export_function("moduleGetMethodMeta", module::get_method_meta)?;
+    cx.export_function("moduleMethodNames", module::method_names)?;
     Ok(())
 }

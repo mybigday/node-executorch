@@ -26,8 +26,6 @@ fn link_lib(lib_path: &Path, lib: &str, whole_link: bool) -> Result<(), ()> {
             }
         }
         return Ok(());
-    } else {
-        eprintln!("{} not found", filename);
     }
     Err(())
 }
@@ -35,6 +33,14 @@ fn link_lib(lib_path: &Path, lib: &str, whole_link: bool) -> Result<(), ()> {
 fn main() {
     println!("cargo:rerun-if-changed=src/sampler.rs");
     println!("cargo:rerun-if-changed=src/tensor.rs");
+    println!("cargo:rerun-if-changed=src/tensor.hpp");
+    println!("cargo:rerun-if-changed=src/module.rs");
+    println!("cargo:rerun-if-changed=src/module.hpp");
+    println!("cargo:rerun-if-changed=src/method_meta.rs");
+    println!("cargo:rerun-if-changed=src/evalue.rs");
+    println!("cargo:rerun-if-changed=src/evalue.hpp");
+    println!("cargo:rerun-if-changed=src/eterror.rs");
+    println!("cargo:rerun-if-changed=src/lib.rs");
 
     let install_prefix = std::env::var("EXECUTORCH_INSTALL_PREFIX").unwrap_or_else(|_| "executorch/cmake-out".to_string());
     let lib_path = Path::new(&install_prefix).join("lib");

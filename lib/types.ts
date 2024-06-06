@@ -1,12 +1,14 @@
-export type DType =
-  | "float32"
-  | "float64"
-  | "int32"
-  | "uint8"
-  | "int8"
-  | "int16"
-  | "int64"
-  | "bool";
+export enum DType {
+  uint8 = 0,
+  int8 = 1,
+  int16 = 2,
+  int32 = 3,
+  int64 = 4,
+  float16 = 5,
+  float32 = 6,
+  float64 = 7,
+  bool = 11,
+}
 
 export type TensorData =
   | boolean[]
@@ -30,7 +32,7 @@ export type TensorPtrInfo = {
 };
 
 export enum EValueTag {
-  Null = 0,
+  None = 0,
   Tensor = 1,
   String = 2,
   Double = 3,
@@ -46,7 +48,7 @@ export enum EValueTag {
 
 export type InternalEValue = {
   tag: EValueTag;
-  data: null | string | number | boolean | TensorPtrInfo;
+  data: null | string | number | boolean | ExternalObject | TensorPtrInfo | undefined;
 }
 
 export type TensorInfo = {

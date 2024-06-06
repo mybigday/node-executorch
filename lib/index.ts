@@ -1,84 +1,88 @@
 import { mod } from "./binding";
-import { EValueTag } from "./types";
-import type { ExternalObject, MethodMeta, TensorData, DType, Optional, TensorPtrInfo, InternalEValue } from "./types";
+import { EValueTag, DType } from "./types";
+import type { ExternalObject, MethodMeta, TensorData, Optional, TensorPtrInfo, InternalEValue } from "./types";
 
 export * from "./types";
 
+export type DTypeStr = keyof typeof DType;
+
+const dtypeTypedArrayMap = {
+  [DType.float32]: Float32Array,
+  [DType.float64]: Float64Array,
+  [DType.uint8]: Uint8Array,
+  [DType.int8]: Int8Array,
+  [DType.int16]: Int16Array,
+  [DType.int32]: Int32Array,
+  [DType.int64]: BigInt64Array,
+};
+
+const toArrayBuffer = (data: TensorData): ArrayBuffer => {
+  if (Array.isArray(data)) {
+    return Uint8Array.from(data.map((v) => v ? 1 : 0)).buffer;
+  } else {
+    return data.buffer;
+  }
+}
+
 class Tensor {
-  ptr: ExternalObject;
-  shape: number[];
-  dtype: DType;
+  _ptr: ExternalObject;
+  _dtype: DType;
 
-  constructor(dtype: DType, shape: number[], data: TensorData | ExternalObject) {
-    this.shape = shape;
-    this.dtype = dtype;
-
+  constructor(dtype: DTypeStr | DType, shape: number[], data: TensorData | ExternalObject) {
+    this._dtype = typeof dtype === "string" ? DType[dtype] : dtype;
     if (!Array.isArray(data) && !ArrayBuffer.isView(data)) {
-      this.ptr = data;
+      this._ptr = data;
       return;
     }
-
-    switch (dtype) {
-      case "uint8":
-        this.ptr = mod.createU8Tensor(data as Uint8Array, shape);
-        break;
-      case "int8":
-        this.ptr = mod.createI8Tensor(data as Int8Array, shape);
-        break;
-      case "int16":
-        this.ptr = mod.createI16Tensor(data as Int16Array, shape);
-        break;
-      case "int32":
-        this.ptr = mod.createI32Tensor(data as Int32Array, shape);
-        break;
-      case "int64":
-        this.ptr = mod.createI64Tensor(data as BigInt64Array, shape);
-        break;
-      case "float32":
-        this.ptr = mod.createF32Tensor(data as Float32Array, shape);
-        break;
-      case "float64":
-        this.ptr = mod.createF64Tensor(data as Float64Array, shape);
-        break;
-      default:
-        throw new Error(`Unsupported dtype: ${dtype}`);
-    }
+    this._ptr = mod.createTensor(this._dtype, shape, toArrayBuffer(data as TensorData));
   }
 
   static fromPtr(ptrInfo: TensorPtrInfo): Tensor {
-    return new Tensor(ptrInfo.dtype, ptrInfo.shape, ptrInfo.ptr);
+    const { shape, dtype, ptr } = ptrInfo;
+
+    return new Tensor(dtype, shape, ptr);
   }
 
   static concat(tensors: Tensor[], axis: number): Tensor {
-    const ptrs = tensors.map((t) => t.ptr);
-    const ptrInfo = mod.tensorConcat(ptrs, axis);
-    return new Tensor(ptrInfo.dtype, ptrInfo.shape, ptrInfo.ptr);
+    const ptrs = tensors.map((t) => t._ptr);
+    return Tensor.fromPtr(mod.tensorConcat(ptrs, axis));
   }
 
-  slice(...slice_position: Array<Optional<Array<Optional<number>>|number>>): Tensor {
-    const ptrInfo = mod.tensorSlice(this.ptr, ...slice_position);
-    return new Tensor(ptrInfo.dtype, ptrInfo.shape, ptrInfo.ptr);
+  get shape(): number[] {
+    return mod.tensorGetShape(this._ptr);
   }
 
-  reshape(shape: number[]): Tensor {
-    mod.tensorReshape(this.ptr, shape);
-    return this;
+  get dtype(): DTypeStr {
+    return DType[this._dtype] as DTypeStr;
   }
 
   get data(): TensorData {
-    return mod.tensorGetData(this.ptr);
+    const buf = mod.tensorGetData(this._ptr);
+    if (this._dtype === DType.bool) {
+      return Array.from(new Uint8Array(buf)).map((v) => v === 1);
+    } else {
+      return new dtypeTypedArrayMap[this._dtype](buf);
+    }
   }
 
   set data(data: TensorData) {
-    mod.tensorSetData(this.ptr, data);
+    mod.tensorSetData(this._ptr, toArrayBuffer(data));
   }
 
+  slice(...slice_position: Array<Optional<Array<Optional<number>>|number>>): Tensor {
+    return Tensor.fromPtr(mod.tensorSlice(this._ptr, slice_position));
+  }
+
+  reshape(shape: number[]): Tensor {
+    return Tensor.fromPtr(mod.tensorReshape(this._ptr, shape));
+  }  
+
   setValue(position: Array<number>, data: number | boolean): void {
-    mod.tensorSetValue(this.ptr, position, data);
+    mod.tensorSetValue(this._ptr, position, data);
   }
 
   dispose() {
-    mod.tensorDispose(this.ptr);
+    delete this._ptr;
   }
 }
 
@@ -86,7 +90,7 @@ export type EValue = null | string | number | boolean | Tensor | undefined;
 
 const toInternalEValue = (value: EValue): InternalEValue => {
   if (value === null) {
-    return { tag: EValueTag.Null, data: null };
+    return { tag: EValueTag.None, data: null };
   } else if (typeof value === "string") {
     return { tag: EValueTag.String, data: value };
   } else if (typeof value === "number") {
@@ -100,7 +104,7 @@ const toInternalEValue = (value: EValue): InternalEValue => {
   } else if (value instanceof Tensor) {
     return {
       tag: EValueTag.Tensor,
-      data: { dtype: value.dtype, shape: value.shape, ptr: value.ptr },
+      data: value._ptr,
     };
   } else {
     throw new Error(`Unsupported type: ${typeof value}`);
@@ -109,7 +113,7 @@ const toInternalEValue = (value: EValue): InternalEValue => {
 
 const fromInternalEValue = (value: InternalEValue): EValue => {
   switch (value.tag) {
-    case EValueTag.Null:
+    case EValueTag.None:
       return null;
     case EValueTag.String:
     case EValueTag.Int:
@@ -124,10 +128,10 @@ const fromInternalEValue = (value: InternalEValue): EValue => {
 }
 
 class Module {
-  ptr: ExternalObject;
+  _ptr: ExternalObject;
 
   constructor(ptr: ExternalObject) {
-    this.ptr = ptr;
+    this._ptr = ptr;
   }
 
   static async load(path: string): Promise<Module> {
@@ -136,15 +140,15 @@ class Module {
   }
 
   get method_names(): string[] {
-    return mod.moduleMethodNames(this.ptr);
+    return mod.moduleMethodNames(this._ptr);
   }
 
   getMethodMeta(method_name: string): MethodMeta {
-    return mod.moduleGetMethodMeta(this.ptr, method_name);
+    return mod.moduleGetMethodMeta(this._ptr, method_name);
   }
 
   async loadMethod(name: string): Promise<void> {
-    await mod.moduleLoadMethod(this.ptr, name);
+    await mod.moduleLoadMethod(this._ptr, name);
   }
 
   async forward(inputs: EValue[]): Promise<EValue[]> {
@@ -154,21 +158,25 @@ class Module {
   async execute(method_name: string, inputs: EValue[] = []): Promise<EValue[]> {
     return (
       await mod.moduleExecute(
-        this.ptr,
+        this._ptr,
         method_name,
         inputs.map(toInternalEValue)
       )
     ).map(fromInternalEValue);
   }
+
+  dispose() {
+    delete this._ptr;
+  }
 }
 
 class Sampler {
-  ptr: ExternalObject;
-  vocab_size: number;
+  _ptr: ExternalObject;
+  _vocab_size: number;
 
   constructor(vocab_size: number, temperature: number = 0.7, topP: number = 0.9, seed?: number) {
-    this.vocab_size = vocab_size;
-    this.ptr = mod.createSampler(
+    this._vocab_size = vocab_size;
+    this._ptr = mod.createSampler(
       vocab_size,
       temperature,
       topP,
@@ -180,15 +188,14 @@ class Sampler {
     if (tensor.dtype !== "float32") {
       throw new Error(`Unsupported dtype: ${tensor.dtype}`);
     }
-    if (tensor.shape.length !== 3 || tensor.shape[0] !== 1 || tensor.shape[1] === 0 || tensor.shape[2] !== this.vocab_size) {
+    if (tensor.shape.length !== 3 || tensor.shape[0] !== 1 || tensor.shape[1] === 0 || tensor.shape[2] !== this._vocab_size) {
       throw new Error(`Invalid shape: ${tensor.shape}`);
     }
-    if (tensor.shape[1] > 1) {
-      const data = tensor.data as Float32Array;
-      return mod.samplerSample(this.ptr, data.subarray(data.length - this.vocab_size));
-    } else {
-      return mod.samplerSample(this.ptr, tensor.data as Float32Array);
-    }
+    return mod.samplerSample(this._ptr, tensor._ptr);
+  }
+
+  dispose() {
+    delete this._ptr;
   }
 }
 

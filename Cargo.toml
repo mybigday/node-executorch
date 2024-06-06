@@ -17,6 +17,7 @@ crate-type = ["cdylib"]
 neon = { version = "1", default-features = false, features = ["napi-6"] }
 cpp = "0.5"
 cpp_macros = "0.5"
+libc = "0.2"
 
 [build-dependencies]
 cpp_build = "0.5"

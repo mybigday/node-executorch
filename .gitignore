@@ -1,6 +1,5 @@
 target
 *.node
-*.so
 *.dll
 *.dylib
 **/node_modules
@@ -9,3 +8,4 @@ npm-debug.log
 cargo.log
 cross.log
 lib/*.js
+bin/**/*
