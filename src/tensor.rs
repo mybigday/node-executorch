@@ -228,7 +228,6 @@ impl Tensor {
         Tensor::create(self.dtype(), new_shape.as_slice(), &new_data)
     }
 
-    // concat([tensor1, tensor2, ...], axis)
     pub fn concat(tensors: Vec<Handle<'_, JsBox<Tensor>>>, axis: i64) -> Result<Self, String> {
         if tensors.len() == 0 {
             return Err("Expected non-empty array of tensors".to_string());
