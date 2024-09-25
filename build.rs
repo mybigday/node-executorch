@@ -84,6 +84,16 @@ fn main() {
         assert!(link_lib(&lib_path, "quantized_kernels", false).is_ok());
     }
 
+    // Tensor extension
+    if link_lib(&lib_path, "extension_tensor", false).is_ok() {
+        assert!(link_lib(&lib_path, "extension_tensor", false).is_ok());
+    }
+
+    // Runner Util extension
+    if link_lib(&lib_path, "extension_runner_util", false).is_ok() {
+        assert!(link_lib(&lib_path, "extension_runner_util", false).is_ok());
+    }
+
     // misc.
     let _ = link_lib(&lib_path, "cpuinfo", false);
     let _ = link_lib(&lib_path, "pthreadpool", false);
