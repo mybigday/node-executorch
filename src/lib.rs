@@ -4,7 +4,6 @@ mod evalue_tag;
 mod macros;
 mod method_meta;
 mod module;
-mod sampler;
 mod tensor;
 mod tensor_type;
 
@@ -12,9 +11,6 @@ use neon::prelude::*;
 
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
-    // Sampler
-    cx.export_function("createSampler", sampler::create)?;
-    cx.export_function("samplerSample", sampler::sample)?;
     // Tensor
     cx.export_function("createTensor", tensor::create)?;
     cx.export_function("tensorGetDtype", tensor::get_dtype)?;
