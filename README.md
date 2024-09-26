@@ -2,17 +2,11 @@
 
 **node-executorch:** Node.js binding for ExecuTorch
 
-## Building node-executorch
-
-Building node-executorch requires a [supported version of Node and Rust](https://github.com/neon-bindings/neon#platform-support).
-
-To run the build, run:
+# Install
 
 ```sh
-$ npm run build
+npm install node-executorch
 ```
-
-This command uses the [@neon-rs/cli](https://www.npmjs.com/package/@neon-rs/cli) utility to assemble the binary Node addon from the output of `cargo`.
 
 # Usage
 
@@ -29,6 +23,18 @@ const outputs = await model.forward([input]);
 input.dispose();
 model.dispose();
 ```
+
+## Building node-executorch
+
+Building node-executorch requires a [supported version of Node and Rust](https://github.com/neon-bindings/neon#platform-support).
+
+To run the build, run:
+
+```sh
+$ npm run build
+```
+
+This command uses the [@neon-rs/cli](https://www.npmjs.com/package/@neon-rs/cli) utility to assemble the binary Node addon from the output of `cargo`.
 
 ## Available Scripts
 
