@@ -1,0 +1,112 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.repository.name }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    timeout-minutes: 120
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        arch: [x86_64, aarch64]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    - name: Use Rust
+      uses: raftario/setup-rust-action@v1
+      with:
+        rust-channel: nightly
+        rust-host: ${{ matrix.arch }}-${{ matrix.os == 'windows-latest' && 'pc-windows-gnullvm' || matrix.os == 'macos-latest' && 'apple-darwin' || 'unknown-linux-gnu' }}
+    - name: Use Node.js 22.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+    - name: Use Python 3.10
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+    - name: Cached pip
+      uses: actions/cache@v2
+      with:
+        path: .venv
+        key: ${{ runner.os }}-venv-3_10
+    - name: Download QNN SDK
+      if: ${{ matrix.os == 'windows-latest' }}
+      shell: bash
+      env:
+        QNN_VERSION: '2.26.0.240828'
+      run: |
+        curl -L -o qnn_sdk.zip https://softwarecenter.qualcomm.com/api/download/software/qualcomm_neural_processing_sdk/v${QNN_VERSION}.zip
+        unzip qnn_sdk.zip
+        rm qnn_sdk.zip
+    - name: Build executorch
+      shell: bash
+      env:
+        QNN_SDK_ROOT: ${{ github.workspace }}/qairt
+        OS: ${{ matrix.os }}
+        ARCH: ${{ matrix.arch }}
+      run: |
+        python -m venv .venv
+        source .venv/bin/activate
+        cd executorch
+        pip install tomli zstd setuptools wheel
+        pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
+        if [ ! -d cmake-out ]; then
+          ./install_requirements.sh
+          EXTRA_CMAKE_ARGS=""
+          if [[ "$OS" == "windows-latest" ]]; then
+            EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/mingw-w64-${ARCH}.clang.toolchain.cmake"
+            if [[ "$ARCH" == "aarch64" ]]; then
+              EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_QNN=ON"
+            fi
+          elif [[ "$OS" == "macos-latest" ]]; then
+            if [[ "$ARCH" == "x86_64" ]]; then
+              EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=x86_64"
+            else
+              EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=arm64"
+            fi
+            EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_COREML=ON"
+          elif [[ "$OS" == "ubuntu-latest" ]] && [[ "$ARCH" == "aarch64" ]]; then
+            EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.clang.toolchain.cmake"
+          fi
+          cmake \
+            -S . \
+            -B cmake-out \
+            -DCMAKE_INSTALL_PREFIX=cmake-out \
+            -DEXECUTORCH_BUILD_XNNPACK=ON \
+            -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON \
+            -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON \
+            -DEXECUTORCH_BUILD_KERNELS_CUSTOM=ON \
+            -DEXECUTORCH_BUILD_KERNELS_QUANTIZED=ON \
+            -DEXECUTORCH_BUILD_KERNELS_OPTIMIZED=ON \
+            -DEXECUTORCH_BUILD_EXTENSION_TENSOR=ON \
+            -DQNN_SDK_ROOT=$QNN_SDK_ROOT \
+            -DEXECUTORCH_BUILD_CPUINFO=ON \
+            -DEXECUTORCH_BUILD_XNNPACK=ON \
+            -DEXECUTORCH_BUILD_PTHREADPOOL=ON \
+            -DEXECUTORCH_BUILD_SDK=ON \
+            $EXTRA_CMAKE_ARGS
+          cmake --build cmake-out --target install --config Release -j$(nproc)
+        fi
+    - name: Install dependencies
+      run: yarn install
+    - name: Build
+      shell: bash
+      env:
+        TARGET: ${{ matrix.arch }}-${{ matrix.os == 'windows-latest' && 'pc-windows-gnullvm' || matrix.os == 'macos-latest' && 'apple-darwin' || 'unknown-linux-gnu' }}
+      run: yarn build --target $TARGET
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: bin
+        path: bin
