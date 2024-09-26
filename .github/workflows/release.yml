@@ -23,10 +23,10 @@ jobs:
       with:
         submodules: recursive
     - name: Use Rust
-      uses: raftario/setup-rust-action@v1
+      uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
-        rust-channel: nightly
-        rust-host: ${{ matrix.arch }}-${{ matrix.os == 'windows-latest' && 'pc-windows-gnullvm' || matrix.os == 'macos-latest' && 'apple-darwin' || 'unknown-linux-gnu' }}
+        toolchain: nightly
+        target: ${{ matrix.arch }}-${{ matrix.os == 'windows-latest' && 'pc-windows-gnullvm' || matrix.os == 'macos-latest' && 'apple-darwin' || 'unknown-linux-gnu' }}
     - name: Use Node.js 22.x
       uses: actions/setup-node@v4
       with:
