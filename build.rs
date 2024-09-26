@@ -1,7 +1,7 @@
-extern crate cpp_build;
 extern crate build_target;
-use std::path::Path;
+extern crate cpp_build;
 use build_target::Os;
+use std::path::Path;
 
 fn link_lib(lib_path: &Path, lib: &str, whole_link: bool) -> Result<(), ()> {
     let so_ext = match build_target::target_os().unwrap() {
@@ -42,9 +42,10 @@ fn main() {
     println!("cargo:rerun-if-changed=src/eterror.rs");
     println!("cargo:rerun-if-changed=src/lib.rs");
 
-    let install_prefix = std::env::var("EXECUTORCH_INSTALL_PREFIX").unwrap_or_else(|_| "executorch/cmake-out".to_string());
+    let install_prefix = std::env::var("EXECUTORCH_INSTALL_PREFIX")
+        .unwrap_or_else(|_| "executorch/cmake-out".to_string());
     let lib_path = Path::new(&install_prefix).join("lib");
-    
+
     let node_platform = match std::env::var("CARGO_CFG_TARGET_OS").unwrap().as_str() {
         "linux" => "linux",
         "macos" => "darwin",
@@ -60,10 +61,19 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", lib_path.display());
 
     // for nodejs/electron usage
-    println!("cargo:rustc-link-arg=-Wl,-rpath,bin/{}/{}", node_platform, node_arch);
-    println!("cargo:rustc-link-arg=-Wl,-rpath,node_modules/bin/{}/{}", node_platform, node_arch);
-    println!("cargo:rustc-link-arg=-Wl,-rpath,resources/node_modules/bin/{}/{}", node_platform, node_arch);
-    
+    println!(
+        "cargo:rustc-link-arg=-Wl,-rpath,bin/{}/{}",
+        node_platform, node_arch
+    );
+    println!(
+        "cargo:rustc-link-arg=-Wl,-rpath,node_modules/bin/{}/{}",
+        node_platform, node_arch
+    );
+    println!(
+        "cargo:rustc-link-arg=-Wl,-rpath,resources/node_modules/bin/{}/{}",
+        node_platform, node_arch
+    );
+
     assert!(link_lib(&lib_path, "executorch", false).is_ok());
     assert!(link_lib(&lib_path, "executorch_no_prim_ops", false).is_ok());
     assert!(link_lib(&lib_path, "extension_module", false).is_ok());
