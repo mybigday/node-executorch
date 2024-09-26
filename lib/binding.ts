@@ -2,7 +2,7 @@ import type { ExternalObject, InternalEValue, MethodMeta, Optional, TensorPtrInf
 
 interface Binding {
   // module methods
-  moduleLoad(path: string): Promise<ExternalObject>;
+  moduleLoad(path: string, load_mode: number): Promise<ExternalObject>;
   moduleLoadMethod(ptr: ExternalObject, name: string): Promise<void>;
   moduleExecute(ptr: ExternalObject, method_name: string, inputs: InternalEValue[]): Promise<InternalEValue[]>;
   moduleGetMethodMeta(ptr: ExternalObject, method_name: string): MethodMeta;

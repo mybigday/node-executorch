@@ -21,7 +21,7 @@ impl From<AtenTensor> for Tensor {
     fn from(tensor: AtenTensor) -> Self {
         unsafe {
             cpp!([tensor as "exec_aten::Tensor"] -> Tensor as "TensorHolder" {
-                return TensorHolder(std::move(tensor));
+                return TensorHolder(tensor);
             })
         }
     }

@@ -9,8 +9,8 @@ class ModuleHolder {
   using Module = torch::executor::Module;
 
 public:
-  ModuleHolder(std::string path) {
-    module_ = std::make_shared<Module>(path, Module::MlockConfig::NoMlock);
+  ModuleHolder(std::string path, Module::LoadMode load_mode = Module::LoadMode::MmapUseMlock) {
+    module_ = std::make_shared<Module>(path, load_mode);
     auto method_names = module_->method_names();
     if (method_names.ok()) {
       auto names = method_names.get();

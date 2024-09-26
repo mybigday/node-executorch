@@ -1,3 +1,10 @@
+export enum ModuleLoadMode {
+  File = 0,
+  Mmap = 1,
+  MmapUseMlock = 2,
+  MmapUseMlockIgnoreErrors = 3,
+}
+
 export enum DType {
   uint8 = 0,
   int8 = 1,

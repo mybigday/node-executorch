@@ -15,6 +15,26 @@ cpp_class!(pub unsafe struct Module as "ModuleHolder");
 
 impl Finalize for Module {}
 
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum ModuleLoadMode {
+    File = 0,
+    Mmap = 1,
+    MmapUseMlock = 2,
+    MmapUseMlockIgnoreErrors = 3,
+}
+
+impl From<i32> for ModuleLoadMode {
+    fn from(value: i32) -> Self {
+        match value {
+            0 => ModuleLoadMode::File,
+            1 => ModuleLoadMode::Mmap,
+            2 => ModuleLoadMode::MmapUseMlock,
+            3 => ModuleLoadMode::MmapUseMlockIgnoreErrors,
+            _ => panic!("Invalid ModuleLoadMode value"),
+        }
+    }
+}
+
 impl Module {
     pub fn copy(&self) -> Self {
         unsafe {
@@ -24,12 +44,16 @@ impl Module {
         }
     }
 
-    pub fn new(path: String) -> Self {
+    pub fn new(path: String, load_mode: ModuleLoadMode) -> Self {
         let cpath = std::ffi::CString::new(path.as_bytes()).unwrap();
+        let load_mode = load_mode as u8;
         unsafe {
             let cpath_ptr = cpath.as_ptr();
-            cpp!([cpath_ptr as "const char*"] -> Module as "ModuleHolder" {
-                return ModuleHolder(std::string(cpath_ptr));
+            cpp!([cpath_ptr as "const char*", load_mode as "uint8_t"] -> Module as "ModuleHolder" {
+                return ModuleHolder(
+                    std::string(cpath_ptr),
+                    static_cast<torch::executor::Module::LoadMode>(load_mode)
+                );
             })
         }
     }
@@ -150,8 +174,9 @@ impl Module {
 
 pub fn load(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = arg_get_value!(cx, 0, JsString, String);
+    let load_mode = arg_get_value!(cx, 1, JsNumber, i32);
     let promise = cx.task(move || path).promise(move |mut cx, path| {
-        let module = Module::new(path);
+        let module = Module::new(path, load_mode.into());
         match module.load() {
             Ok(()) => Ok(cx.boxed(module)),
             Err(e) => cx.throw_error(format!("Error: {:?}", e)),

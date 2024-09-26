@@ -1,5 +1,5 @@
 import { mod } from "./binding";
-import { EValueTag, DType } from "./types";
+import { EValueTag, DType, ModuleLoadMode } from "./types";
 import type { ExternalObject, MethodMeta, TensorData, Optional, TensorPtrInfo, InternalEValue } from "./types";
 
 export * from "./types";
@@ -134,8 +134,8 @@ class Module {
     this._ptr = ptr;
   }
 
-  static async load(path: string): Promise<Module> {
-    const ptr = await mod.moduleLoad(path);
+  static async load(path: string, load_mode: ModuleLoadMode = ModuleLoadMode.MmapUseMlock): Promise<Module> {
+    const ptr = await mod.moduleLoad(path, load_mode);
     return new Module(ptr);
   }
 

@@ -65,6 +65,7 @@ fn main() {
     println!("cargo:rustc-link-arg=-Wl,-rpath,resources/node_modules/bin/{}/{}", node_platform, node_arch);
     
     assert!(link_lib(&lib_path, "executorch", false).is_ok());
+    assert!(link_lib(&lib_path, "executorch_no_prim_ops", false).is_ok());
     assert!(link_lib(&lib_path, "extension_module", false).is_ok());
     assert!(link_lib(&lib_path, "extension_data_loader", false).is_ok());
 
@@ -85,14 +86,10 @@ fn main() {
     }
 
     // Tensor extension
-    if link_lib(&lib_path, "extension_tensor", false).is_ok() {
-        assert!(link_lib(&lib_path, "extension_tensor", false).is_ok());
-    }
+    let _ = link_lib(&lib_path, "extension_tensor", false);
 
     // Runner Util extension
-    if link_lib(&lib_path, "extension_runner_util", false).is_ok() {
-        assert!(link_lib(&lib_path, "extension_runner_util", false).is_ok());
-    }
+    let _ = link_lib(&lib_path, "extension_runner_util", false);
 
     // misc.
     let _ = link_lib(&lib_path, "cpuinfo", false);
