@@ -4,6 +4,8 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+  label:
+    types: [created, deleted]
 
 jobs:
   build_executorch:
