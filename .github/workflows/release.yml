@@ -22,24 +22,11 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-    - name: Use Rust - Linux
-      if: ${{ matrix.os == 'ubuntu-latest' }}
+    - name: Use Rust
       uses: raftario/setup-rust-action@v1
       with:
         rust-channel: nightly
-        rust-host: ${{ matrix.arch }}-unknown-linux-gnu
-    - name: Use Rust - Windows
-      if: ${{ matrix.os == 'windows-latest' }}
-      uses: raftario/setup-rust-action@v1
-      with:
-        rust-channel: nightly
-        rust-host: ${{ matrix.arch }}-pc-windows-gnullvm
-    - name: Use Rust - MacOS
-      if: ${{ matrix.os == 'macos-latest' }}
-      uses: raftario/setup-rust-action@v1
-      with:
-        rust-channel: nightly
-        rust-host: ${{ matrix.arch }}-apple-darwin
+        rust-host: ${{ matrix.arch }}-${{ matrix.os == 'windows-latest' && 'pc-windows-gnullvm' || matrix.os == 'macos-latest' && 'apple-darwin' || 'unknown-linux-gnu' }}
     - name: Use Node.js 22.x
       uses: actions/setup-node@v4
       with:
@@ -66,6 +53,8 @@ jobs:
       shell: bash
       env:
         QNN_SDK_ROOT: ${{ github.workspace }}/qairt
+        OS: ${{ matrix.os }}
+        ARCH: ${{ matrix.arch }}
       run: |
         python -m venv .venv
         source .venv/bin/activate
@@ -75,15 +64,19 @@ jobs:
         if [ ! -d cmake-out ]; then
           ./install_requirements.sh
           EXTRA_CMAKE_ARGS=""
-          if [ ${{ matrix.os == 'windows-latest' }} ]; then
-            EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/mingw-w64-${{ matrix.arch }}.clang.toolchain.cmake"
-            if [ ${{ matrix.arch == 'aarch64' }} ]; then
+          if [[ "$OS" == "windows-latest" ]]; then
+            EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/mingw-w64-${ARCH}.clang.toolchain.cmake"
+            if [[ "$ARCH" == "aarch64" ]]; then
               EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_QNN=ON"
             fi
-          elif [ ${{ matrix.os == 'macos-latest' }} ]; then
-            EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch == 'x86_64' && 'x86_64' || 'arm64' }}"
+          elif [[ "$OS" == "macos-latest" ]]; then
+            if [[ "$ARCH" == "x86_64" ]]; then
+              EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=x86_64"
+            else
+              EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=arm64"
+            fi
             EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_COREML=ON"
-          elif [ ${{ matrix.os == 'ubuntu-latest' }} && ${{ matrix.arch == 'aarch64' }} ]; then
+          elif [[ "$OS" == "ubuntu-latest" ]] && [[ "$ARCH" == "aarch64" ]]; then
             EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.clang.toolchain.cmake"
           fi
           cmake \
@@ -109,14 +102,9 @@ jobs:
       run: yarn install
     - name: Build
       shell: bash
-      run: |
-        if [ ${{ matrix.os == 'windows-latest' }} ]; then
-          yarn build --target ${{ matrix.arch }}-pc-windows-gnullvm
-        elif [ ${{ matrix.os == 'macos-latest' }} ]; then
-          yarn build --target ${{ matrix.arch }}-apple-darwin
-        else
-          yarn build --target ${{ matrix.arch }}-unknown-linux-gnu
-        fi
+      env:
+        TARGET: ${{ matrix.arch }}-${{ matrix.os == 'windows-latest' && 'pc-windows-gnullvm' || matrix.os == 'macos-latest' && 'apple-darwin' || 'unknown-linux-gnu' }}
+      run: yarn build --target $TARGET
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
