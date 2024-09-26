@@ -14,9 +14,9 @@ jobs:
     timeout-minutes: 120
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        plat: [linux, macos, windows]
         arch: [x86_64, aarch64]
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.plat == 'windows' && 'ubuntu-latest' || matrix.plat == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: nightly
-        target: ${{ matrix.arch }}-${{ matrix.os == 'windows-latest' && 'pc-windows-gnullvm' || matrix.os == 'macos-latest' && 'apple-darwin' || 'unknown-linux-gnu' }}
+        target: ${{ matrix.arch }}-${{ matrix.plat == 'windows' && 'pc-windows-gnullvm' || matrix.plat == 'macos' && 'apple-darwin' || 'unknown-linux-gnu' }}
     - name: Use Node.js 22.x
       uses: actions/setup-node@v4
       with:
@@ -41,7 +41,7 @@ jobs:
         path: .venv
         key: ${{ runner.os }}-venv-3_10
     - name: Download QNN SDK
-      if: ${{ matrix.os == 'windows-latest' }}
+      if: ${{ matrix.plat == 'windows' }}
       shell: bash
       env:
         QNN_VERSION: '2.26.0.240828'
@@ -53,9 +53,16 @@ jobs:
       shell: bash
       env:
         QNN_SDK_ROOT: ${{ github.workspace }}/qairt
-        OS: ${{ matrix.os }}
+        PLATFORM: ${{ matrix.plat }}
         ARCH: ${{ matrix.arch }}
       run: |
+        if [[ "$PLATFORM" == "windows" ]]; then
+          curl -L -o llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20240917/llvm-mingw-20240917-msvcrt-ubuntu-20.04-x86_64.tar.xz
+          tar -xf llvm-mingw.tar.xz
+          rm llvm-mingw.tar.xz
+          MINGW_PATH=$(realpath llvm-mingw-*)
+          export PATH="${MINGW_PATH}/bin:$PATH"
+        fi
         python -m venv .venv
         source .venv/bin/activate
         cd executorch
@@ -67,19 +74,19 @@ jobs:
         if [ ! -d cmake-out ]; then
           ./install_requirements.sh
           EXTRA_CMAKE_ARGS=""
-          if [[ "$OS" == "windows-latest" ]]; then
+          if [[ "$PLATFORM" == "windows" ]]; then
             EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/mingw-w64-${ARCH}.clang.toolchain.cmake"
             if [[ "$ARCH" == "aarch64" ]]; then
               EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_QNN=ON"
             fi
-          elif [[ "$OS" == "macos-latest" ]]; then
+          elif [[ "$PLATFORM" == "macos" ]]; then
             if [[ "$ARCH" == "x86_64" ]]; then
               EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=x86_64"
             else
               EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=arm64"
             fi
             EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_COREML=ON"
-          elif [[ "$OS" == "ubuntu-latest" ]] && [[ "$ARCH" == "aarch64" ]]; then
+          elif [[ "$PLATFORM" == "linux" ]] && [[ "$ARCH" == "aarch64" ]]; then
             EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.clang.toolchain.cmake"
           fi
           cmake \
@@ -106,7 +113,7 @@ jobs:
     - name: Build
       shell: bash
       env:
-        TARGET: ${{ matrix.arch }}-${{ matrix.os == 'windows-latest' && 'pc-windows-gnullvm' || matrix.os == 'macos-latest' && 'apple-darwin' || 'unknown-linux-gnu' }}
+        TARGET: ${{ matrix.arch }}-${{ matrix.plat == 'windows' && 'pc-windows-gnullvm' || matrix.plat == 'macos' && 'apple-darwin' || 'unknown-linux-gnu' }}
       run: yarn build --target $TARGET
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
