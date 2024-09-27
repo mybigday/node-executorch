@@ -14,9 +14,38 @@ jobs:
     timeout-minutes: 120
     strategy:
       matrix:
-        plat: [linux, macos, windows]
-        arch: [x86_64, aarch64]
-    runs-on: ${{ matrix.plat == 'windows' && 'ubuntu-latest' || matrix.plat == 'macos' && 'macos-latest' || 'ubuntu-latest' }}
+        include:
+          # linux x86_64
+          - plat: linux
+            arch: x86_64
+            target: x86_64-unknown-linux-gnu
+            os: ubuntu-24.04
+          # linux aarch64
+          - plat: linux
+            arch: aarch64
+            target: aarch64-unknown-linux-gnu
+            os: ubuntu-24.04
+          # macos x86_64
+          - plat: macos
+            arch: x86_64
+            target: x86_64-apple-darwin
+            os: macos-14
+          # macos aarch64
+          - plat: macos
+            arch: arm64
+            target: aarch64-apple-darwin
+            os: macos-14
+          # windows x86_64
+          - plat: windows
+            arch: x86_64
+            target: x86_64-pc-windows-gnullvm
+            os: ubuntu-24.04
+          # windows aarch64
+          - plat: windows
+            arch: arm64
+            target: aarch64-pc-windows-gnullvm
+            os: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
@@ -26,7 +55,7 @@ jobs:
       uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: nightly
-        target: ${{ matrix.arch }}-${{ matrix.plat == 'windows' && 'pc-windows-gnullvm' || matrix.plat == 'macos' && 'apple-darwin' || 'unknown-linux-gnu' }}
+        target: ${{ matrix.target }}
     - name: Use Node.js 22.x
       uses: actions/setup-node@v4
       with:
@@ -51,22 +80,28 @@ jobs:
         rm qnn_sdk.zip
         QNN_SDK_ROOT=$(realpath qairt/${QNN_VERSION})
         echo "QNN_SDK_ROOT=$QNN_SDK_ROOT" >> $GITHUB_ENV
+    - name: Install linux cross-compilation toolchain
+      if: ${{ matrix.plat == 'linux' && matrix.arch == 'aarch64' }}
+      run: |
+        echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/temp-repository.list
+        sudo apt-get update
+        sudo apt-get install -y gcc-13-aarch64-linux-gnu g++-13-aarch64-linux-gnu
+        sudo rm /etc/apt/sources.list.d/temp-repository.list
+        sudo apt-get update
+    - name: Install windows cross-compilation toolchain
+      if: ${{ matrix.plat == 'windows' }}
+      run: |
+        curl -L -o llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20240917/llvm-mingw-20240917-msvcrt-ubuntu-20.04-x86_64.tar.xz
+        tar -xf llvm-mingw.tar.xz
+        rm llvm-mingw.tar.xz
+        MINGW_PATH=$(realpath llvm-mingw-*)
+        echo "PATH=$MINGW_PATH/bin:$PATH" >> $GITHUB_ENV
     - name: Build executorch
       shell: bash
       env:
         PLATFORM: ${{ matrix.plat }}
         ARCH: ${{ matrix.arch }}
       run: |
-        if [[ "$PLATFORM" == "windows" ]]; then
-          curl -L -o llvm-mingw.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20240917/llvm-mingw-20240917-msvcrt-ubuntu-20.04-x86_64.tar.xz
-          tar -xf llvm-mingw.tar.xz
-          rm llvm-mingw.tar.xz
-          MINGW_PATH=$(realpath llvm-mingw-*)
-          export PATH="${MINGW_PATH}/bin:$PATH"
-        elif [[ "$PLATFORM" == "linux" && "$ARCH" == "aarch64" ]]; then
-          sudo apt-get update
-          sudo apt-get install -y gcc-14-aarch64-linux-gnu g++-14-aarch64-linux-gnu
-        fi
         python -m venv .venv
         source .venv/bin/activate
         cd executorch
@@ -117,7 +152,7 @@ jobs:
     - name: Build
       shell: bash
       env:
-        TARGET: ${{ matrix.arch }}-${{ matrix.plat == 'windows' && 'pc-windows-gnullvm' || matrix.plat == 'macos' && 'apple-darwin' || 'unknown-linux-gnu' }}
+        TARGET: ${{ matrix.target }}
       run: yarn build --target $TARGET
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
