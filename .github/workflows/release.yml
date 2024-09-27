@@ -49,10 +49,11 @@ jobs:
         curl -L -o qnn_sdk.zip https://softwarecenter.qualcomm.com/api/download/software/qualcomm_neural_processing_sdk/v${QNN_VERSION}.zip
         unzip qnn_sdk.zip
         rm qnn_sdk.zip
+        QNN_SDK_ROOT=$(realpath qairt/${QNN_VERSION})
+        echo "QNN_SDK_ROOT=$QNN_SDK_ROOT" >> $GITHUB_ENV
     - name: Build executorch
       shell: bash
       env:
-        QNN_SDK_ROOT: ${{ github.workspace }}/qairt
         PLATFORM: ${{ matrix.plat }}
         ARCH: ${{ matrix.arch }}
       run: |
