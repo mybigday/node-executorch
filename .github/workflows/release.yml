@@ -86,7 +86,7 @@ jobs:
         echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/temp-repository.list
         sudo apt-get update
         sudo apt-get install -y gcc-13-aarch64-linux-gnu g++-13-aarch64-linux-gnu binutils-aarch64-linux-gnu
-        sudo rm /usr/bin/aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-g++
+        sudo rm /usr/bin/aarch64-linux-gnu-gcc /usr/bin/aarch64-linux-gnu-g++ || true
         sudo ln -s /usr/bin/aarch64-linux-gnu-gcc-13 /usr/bin/aarch64-linux-gnu-gcc
         sudo ln -s /usr/bin/aarch64-linux-gnu-g++-13 /usr/bin/aarch64-linux-gnu-g++
         sudo rm /etc/apt/sources.list.d/temp-repository.list
