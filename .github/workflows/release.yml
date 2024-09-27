@@ -42,7 +42,7 @@ jobs:
             os: ubuntu-24.04
           # windows aarch64
           - plat: windows
-            arch: arm64
+            arch: aarch64
             target: aarch64-pc-windows-gnullvm
             os: ubuntu-24.04
     runs-on: ${{ matrix.os }}
@@ -119,11 +119,7 @@ jobs:
               EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_QNN=ON"
             fi
           elif [[ "$PLATFORM" == "macos" ]]; then
-            if [[ "$ARCH" == "x86_64" ]]; then
-              EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=x86_64"
-            else
-              EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=arm64"
-            fi
+            EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=${ARCH}"
             EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_COREML=ON"
           elif [[ "$PLATFORM" == "linux" ]] && [[ "$ARCH" == "aarch64" ]]; then
             EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.gcc.toolchain.cmake"
