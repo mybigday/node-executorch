@@ -21,5 +21,6 @@ cpp_macros = "0.5"
 libc = "0.2"
 
 [build-dependencies]
+cc = "1.1.21"
 cpp_build = "0.5"
 build-target = "0.4"

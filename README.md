@@ -31,7 +31,7 @@ Building node-executorch requires a [supported version of Node and Rust](https:/
 To run the build, run:
 
 ```sh
-$ npm run build
+$ EXECUTORCH_INSTALL_PREFIX=path/to/executorch/cmake-out yarn build
 ```
 
 This command uses the [@neon-rs/cli](https://www.npmjs.com/package/@neon-rs/cli) utility to assemble the binary Node addon from the output of `cargo`.

@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 
 let platform = 'unknown';
 let arch = 'unknown';
@@ -42,6 +43,23 @@ if (!fs.existsSync(`bin/${platform}/${arch}`)) {
 
 // Rename the index.node file to executorch.node
 fs.renameSync('index.node', `bin/${platform}/${arch}/executorch.node`);
+
+// Copy LLVM libraries for MSVCRT
+if (platform === 'win32') {
+  const libs = ['libc++.dll', 'libomp.dll', 'libunwind.dll', 'libwinpthread-1.dll'];
+  // find install prefix in PATH
+  const mingw_prefix = arch === 'arm64' ? 'aarch64-w64-mingw32' : 'x86_64-w64-mingw32';
+  const cmdPath = process.env.PATH.split(':').find(p => fs.existsSync(`${p}/${mingw_prefix}-gcc`));
+  if (!cmdPath) {
+    console.warn('Could not find mingw in PATH');
+  }
+  const platformDir = path.join(cmdPath, '..', mingw_prefix);
+  if (fs.existsSync(platformDir)) {
+    for (const lib of libs) {
+      fs.copyFileSync(`${platformDir}/bin/${lib}`, `bin/${platform}/${arch}/${lib}`);
+    }
+  }
+}
 
 // Copy the shared libraries to the bin directory
 const installPrefix = process.env.EXECUTORCH_INSTALL_PREFIX || 'executorch/cmake-out';
