@@ -60,6 +60,11 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 22.x
+    - name: Node modules cache
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
     - name: Use Python 3.10
       uses: actions/setup-python@v5
       with:
@@ -157,3 +162,41 @@ jobs:
       with:
         name: bin-${{ matrix.plat }}-${{ matrix.arch }}
         path: bin
+  npm-publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+    - name: Node modules cache
+      uses: actions/cache@v4
+      with:
+        path: node_modules
+        key: ${{ runner.os }}-node-${{ hashFiles('**/yarn.lock') }}
+    - name: Download bundled files
+      uses: actions/download-artifact@v4
+      with:
+        path: bin
+        pattern: bin-*
+        merge-multiple: true
+    - name: Install dependencies
+      run: yarn install
+    - name: Test
+      run: yarn test
+    - name: Publish to NPM
+      uses: JS-DevTools/npm-publish@v3
+      with:
+        token: ${{ secrets.NPM_TOKEN }}
+    - name: Draft release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
+      with:
+        tag_name: ${{ github.ref  }}
+        release_name: ${{ github.ref  }}
+        draft: true
