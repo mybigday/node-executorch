@@ -27,7 +27,10 @@ if (content[0] === 0x7f && content[1] === 0x45 && content[2] === 0x4c && content
   } else {
     console.error('Unknown PE arch code:', code.toString(16));
   }
-} else if (content[0] === 0xfe && content[1] === 0xed && content[2] === 0xfa && content[3] === 0xce) { // MacOS: Mach-O x86_64/aarch64
+} else if (
+  (content[0] === 0xfe && content[1] === 0xed && content[2] === 0xfa && content[3] === 0xce) ||
+  (content[0] === 0xcf && content[1] === 0xfa && content[2] === 0xed && content[3] === 0xfe)
+) { // MacOS: Mach-O x86_64/aarch64
   platform = 'darwin';
   if (content[4] === 0x07) {
     arch = 'x64';
@@ -64,7 +67,11 @@ if (platform === 'win32') {
 // Copy the shared libraries to the bin directory
 const installPrefix = process.env.EXECUTORCH_INSTALL_PREFIX || 'executorch/cmake-out';
 
-const shared_libs = ['libextension_module', 'qnn_executorch_backend'];
+const shared_libs = ['qnn_executorch_backend'];
+
+if (!fs.existsSync(`${installPrefix}/lib/libextension_module_static.a`)) {
+  shared_libs.push('libextension_module');
+}
 
 for (const lib of shared_libs) {
   if (fs.existsSync(`${installPrefix}/lib/${lib}.so`)) {

@@ -6,7 +6,7 @@ use std::path::Path;
 fn link_lib(lib_path: &Path, lib: &str, whole_link: bool) -> Result<(), ()> {
     let so_ext = match build_target::target_os().unwrap() {
         Os::Linux => "so",
-        Os::MacOs => "dylib",
+        Os::MacOs => "a",
         Os::Windows => "dll",
         _ => panic!("Unsupported OS"),
     };
@@ -16,7 +16,7 @@ fn link_lib(lib_path: &Path, lib: &str, whole_link: bool) -> Result<(), ()> {
         _ => format!("lib{}.a", lib),
     };
     if lib_path.join(&filename).exists() {
-        if filename.ends_with(so_ext) {
+        if filename.ends_with(so_ext) && so_ext != "a" {
             println!("cargo:rustc-link-lib=dylib={}", lib);
         } else {
             if whole_link {
@@ -76,7 +76,9 @@ fn main() {
 
     assert!(link_lib(&lib_path, "executorch", false).is_ok());
     assert!(link_lib(&lib_path, "executorch_no_prim_ops", false).is_ok());
-    assert!(link_lib(&lib_path, "extension_module", false).is_ok());
+    if !link_lib(&lib_path, "extension_module_static", false).is_ok() {
+        assert!(link_lib(&lib_path, "extension_module", false).is_ok());
+    }
     assert!(link_lib(&lib_path, "extension_data_loader", false).is_ok());
 
     // Optimized Kernels

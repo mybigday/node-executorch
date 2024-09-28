@@ -29,7 +29,7 @@ jobs:
           - plat: macos
             arch: x86_64
             target: x86_64-apple-darwin
-            os: macos-14
+            os: macos-13
           # macos aarch64
           - plat: macos
             arch: arm64
@@ -128,8 +128,7 @@ jobs:
               EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_QNN=ON"
             fi
           elif [[ "$PLATFORM" == "macos" ]]; then
-            EXTRA_CMAKE_ARGS="-DCMAKE_OSX_ARCHITECTURES=${ARCH}"
-            EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_COREML=ON"
+            EXTRA_CMAKE_ARGS="-DEXECUTORCH_BUILD_COREML=ON"
           elif [[ "$PLATFORM" == "linux" ]] && [[ "$ARCH" == "aarch64" ]]; then
             EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.gcc.toolchain.cmake"
           fi
