@@ -29,7 +29,7 @@ jobs:
           - plat: macos
             arch: x86_64
             target: x86_64-apple-darwin
-            os: macos-13
+            os: macos-14
           # macos aarch64
           - plat: macos
             arch: arm64
@@ -118,11 +118,7 @@ jobs:
         patch -p1 -i ${{ github.workspace }}/scripts/cpuinfo.patch
         cd ${{ github.workspace }}/executorch
         pip install tomli zstd setuptools wheel
-        if [[ "$PLATFORM" == "macos" ]]; then
-          pip install torch torchvision torchaudio
-        else
-          pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
-        fi
+        pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
         if [ ! -d cmake-out ]; then
           ./install_requirements.sh
           EXTRA_CMAKE_ARGS=""
@@ -132,7 +128,7 @@ jobs:
               EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_QNN=ON"
             fi
           elif [[ "$PLATFORM" == "macos" ]]; then
-            EXTRA_CMAKE_ARGS="-DEXECUTORCH_BUILD_COREML=ON"
+            EXTRA_CMAKE_ARGS="-DEXECUTORCH_BUILD_COREML=ON -DCMAKE_OSX_ARCHITECTURES=${ARCH}"
           elif [[ "$PLATFORM" == "linux" ]] && [[ "$ARCH" == "aarch64" ]]; then
             EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.gcc.toolchain.cmake"
           fi
