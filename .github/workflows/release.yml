@@ -118,7 +118,11 @@ jobs:
         patch -p1 -i ${{ github.workspace }}/scripts/cpuinfo.patch
         cd ${{ github.workspace }}/executorch
         pip install tomli zstd setuptools wheel
-        pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
+        if [[ "$PLATFORM" == "macos" ]]; then
+          pip install torch torchvision torchaudio
+        else
+          pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
+        fi
         if [ ! -d cmake-out ]; then
           ./install_requirements.sh
           EXTRA_CMAKE_ARGS=""
