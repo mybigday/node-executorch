@@ -111,7 +111,7 @@ jobs:
         PLATFORM: ${{ matrix.plat }}
         ARCH: ${{ matrix.arch }}
       run: |
-        python -m venv .venv
+        python3 -m venv .venv
         source .venv/bin/activate
         cd executorch
         cd backends/xnnpack/third-party/cpuinfo/
