@@ -1,5 +1,5 @@
 import path from "path";
-import { Module, Tensor, Sampler, EValueTag, DType } from "./index";
+import { Module, Tensor, EValueTag, DType } from "./index";
 
 const model = path.resolve(__dirname, "__fixtures__/mul.pte");
 
