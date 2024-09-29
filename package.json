@@ -8,7 +8,7 @@
     "test-all": "yarn test-rs && yarn test",
     "test": "jest",
     "test-rs": "cargo test",
-    "prepack": "npm run build-js",
+    "prepack": "yarn build-js",
     "cargo-build": "cargo build --message-format=json > cargo.log",
     "cross-build": "cross build --message-format=json > cross.log",
     "postcargo-build": "yarn neon-dist < cargo.log",
@@ -18,6 +18,10 @@
     "debug": "yarn cargo-build",
     "build": "yarn cargo-build --release",
     "cross": "yarn cross-build --release"
+  },
+  "engines": {
+    "yarn": ">=1.22",
+    "node": ">=18"
   },
   "author": "Hans <hans.chen@bricks.tools>",
   "license": "BSD-3-Clause",
