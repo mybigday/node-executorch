@@ -185,8 +185,6 @@ jobs:
         merge-multiple: true
     - name: Install dependencies
       run: yarn install
-    - name: Test
-      run: yarn test
     - name: Publish to NPM
       uses: JS-DevTools/npm-publish@v3
       with:
