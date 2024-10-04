@@ -1,3 +1,25 @@
+diff --git a/include/cpuinfo.h b/include/cpuinfo.h
+index 8bb1db4..d3dbb1d 100644
+--- a/include/cpuinfo.h
++++ b/include/cpuinfo.h
+@@ -520,6 +520,8 @@ enum cpuinfo_uarch {
+ 	cpuinfo_uarch_falkor = 0x00400103,
+ 	/** Qualcomm Saphira. */
+ 	cpuinfo_uarch_saphira = 0x00400104,
++	/** Qualcomm Oryon. */
++	cpuinfo_uarch_oryon = 0x00400105,
+ 
+ 	/** Nvidia Denver. */
+ 	cpuinfo_uarch_denver = 0x00500100,
+@@ -702,7 +704,7 @@ struct cpuinfo_cluster {
+ 	uint64_t frequency;
+ };
+ 
+-#define CPUINFO_PACKAGE_NAME_MAX 48
++#define CPUINFO_PACKAGE_NAME_MAX 64
+ 
+ struct cpuinfo_package {
+ 	/** SoC or processor chip model name */
 diff --git a/src/arm/windows/init-by-logical-sys-info.c b/src/arm/windows/init-by-logical-sys-info.c
 index 6ce6efe..d3c2279 100644
 --- a/src/arm/windows/init-by-logical-sys-info.c
@@ -60,19 +82,6 @@ index 6ce6efe..d3c2279 100644
  	return true;
  }
  
-diff --git a/include/cpuinfo.h b/include/cpuinfo.h
-index 387611c..e1c0a4a 100644
---- a/include/cpuinfo.h
-+++ b/include/cpuinfo.h
-@@ -520,6 +520,8 @@ enum cpuinfo_uarch {
- 	cpuinfo_uarch_falkor = 0x00400103,
- 	/** Qualcomm Saphira. */
- 	cpuinfo_uarch_saphira = 0x00400104,
-+	/** Qualcomm Oryon. */
-+	cpuinfo_uarch_oryon = 0x00400105,
- 
- 	/** Nvidia Denver. */
- 	cpuinfo_uarch_denver = 0x00500100,
 diff --git a/src/arm/windows/init.c b/src/arm/windows/init.c
 index de2f6cc..fa6a9f3 100644
 --- a/src/arm/windows/init.c
