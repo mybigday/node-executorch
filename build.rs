@@ -112,6 +112,7 @@ fn main() {
     // XNNPACK
     if link_lib(&lib_path, "xnnpack_backend", true).is_ok() {
         assert!(link_lib(&lib_path, "XNNPACK", false).is_ok());
+        let _ = link_lib(&lib_path, "microkernels-prod", false);
     }
 
     // Vulkan
