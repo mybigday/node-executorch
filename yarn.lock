@@ -997,40 +997,55 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@cargo-messages/android-arm-eabi@0.1.67":
-  version "0.1.67"
-  resolved "https://registry.yarnpkg.com/@cargo-messages/android-arm-eabi/-/android-arm-eabi-0.1.67.tgz#9cb86a8dd3cc31b6e6ed99c90ac4337cab327c5f"
-  integrity sha512-L2u1zuPIy7iTB4AQyzXHTPlHtCF9L1VKsyfTLr8TBL7kXXnW+juorxujuYTKKO2Gw2ndb+NjPY27ZFqpPjtaXA==
+"@cargo-messages/android-arm-eabi@0.1.80":
+  version "0.1.80"
+  resolved "https://registry.yarnpkg.com/@cargo-messages/android-arm-eabi/-/android-arm-eabi-0.1.80.tgz#4a3ec5c5c5731e3c4d053b8004de606d2cdd5ec4"
+  integrity sha512-QawKsQCs8rYqtq8JSEQBLuX/Tb4FcMVzg8ykSxqYy0qrgunr26MCqxGSsgzTUu4S7y3OH3RXN9lD+/JJZJB81w==
 
-"@cargo-messages/darwin-arm64@0.1.67":
-  version "0.1.67"
-  resolved "https://registry.yarnpkg.com/@cargo-messages/darwin-arm64/-/darwin-arm64-0.1.67.tgz#7ebcf3d1395295b2f7ae313b43dba69a72732ea3"
-  integrity sha512-LjJiPbxn1TzvYnCH4Vrq0O8leLX1koVnmeLiJsdO5INBUrfJZeV/7tijLEtS6ZZhAR00B1nurJL6ycrUHY6F3g==
+"@cargo-messages/darwin-arm64@0.1.80":
+  version "0.1.80"
+  resolved "https://registry.yarnpkg.com/@cargo-messages/darwin-arm64/-/darwin-arm64-0.1.80.tgz#37a7b62561f29dbadf39e6fa52ee774dc2163826"
+  integrity sha512-l7s5I90Eol597qEfbQn6P7EFyxcedRpcwjXAPOqjTR7D7dHzMIxVXeLmYeiwSUsebTeQ9FWBi5H9thxJDJdShw==
 
-"@cargo-messages/darwin-x64@0.1.67":
-  version "0.1.67"
-  resolved "https://registry.yarnpkg.com/@cargo-messages/darwin-x64/-/darwin-x64-0.1.67.tgz#3e32c696747499ebe525a71f58f0a812aac5d587"
-  integrity sha512-XHKSnBLO8heVUuWPzYmyZMTFTc5pp4YREHNaviFoukVl6DPw2nUz3eclwI7EesUXtdjYiHegKB+9RgkpvzWijw==
+"@cargo-messages/darwin-x64@0.1.80":
+  version "0.1.80"
+  resolved "https://registry.yarnpkg.com/@cargo-messages/darwin-x64/-/darwin-x64-0.1.80.tgz#b52bd16816b192974411b6b4b30efc352c8363c8"
+  integrity sha512-B8d5wjp3WosHh95nHX+MKHdb2n2/0PlajkuuULLy8sDPbC83mBoGQ6m15cY3g3nGiB9Wsot1GR6QkyaEVYZ5HQ==
 
-"@cargo-messages/linux-arm-gnueabihf@0.1.67":
-  version "0.1.67"
-  resolved "https://registry.yarnpkg.com/@cargo-messages/linux-arm-gnueabihf/-/linux-arm-gnueabihf-0.1.67.tgz#8bdd9dd7ed6ffd88ef9d21652231fb2812f527ec"
-  integrity sha512-CnrdvDEU9KfXh66UqYnJBw9h/JnstYHAZiTdf05HEPdv+T8HNVnFvalQ5nYWd2kezezvqpz7MVHNEnqtKdxEPQ==
+"@cargo-messages/linux-arm-gnueabihf@0.1.80":
+  version "0.1.80"
+  resolved "https://registry.yarnpkg.com/@cargo-messages/linux-arm-gnueabihf/-/linux-arm-gnueabihf-0.1.80.tgz#ecae14c7aa4ccf628b2ef723a8f81365a92341ee"
+  integrity sha512-q4vm0QJesAzMm0iOmTOMPQjVTgkQZCr1+NKluTb4343VDRceRQ6Hb01dzT2nm7dvsZYltP38WrsLavbrbXj08Q==
 
-"@cargo-messages/linux-x64-gnu@0.1.67":
-  version "0.1.67"
-  resolved "https://registry.yarnpkg.com/@cargo-messages/linux-x64-gnu/-/linux-x64-gnu-0.1.67.tgz#cf0cf0de819895cebad31e4426e4341621c43da6"
-  integrity sha512-UzJ7rCx1Ch8gOrdXSnnPS1CmzYcPr6suIvPo/vx6+xGJQuCpNA38PpjhKul9vwH9cDXHwNUq5/3JbEIxBTjCyw==
+"@cargo-messages/linux-arm64-gnu@0.1.80":
+  version "0.1.80"
+  resolved "https://registry.yarnpkg.com/@cargo-messages/linux-arm64-gnu/-/linux-arm64-gnu-0.1.80.tgz#97f9ee0b6c6784de70746bf56db50fad3d7bb96b"
+  integrity sha512-fz7iaDWF0dK51Dg9+UzHNMHt28jTU27OZLDXHwKhWsf6VSJUAmAaM5auwTjhUbF0HXKxueak6i4MdswyArcy3A==
 
-"@cargo-messages/win32-arm64-msvc@0.1.67":
-  version "0.1.67"
-  resolved "https://registry.yarnpkg.com/@cargo-messages/win32-arm64-msvc/-/win32-arm64-msvc-0.1.67.tgz#e5d5650ab2afa366586ebafbb8942a5d5ed377a1"
-  integrity sha512-Cbp9aBu1T3BhjSNUN/3v51Qr7bkSUNo5cwYMCZlkOdjepxNqTBhCEAzm2CHD9W0osdJrMF9/c8RX5yu0UkjxFQ==
+"@cargo-messages/linux-arm64-musl@0.1.80":
+  version "0.1.80"
+  resolved "https://registry.yarnpkg.com/@cargo-messages/linux-arm64-musl/-/linux-arm64-musl-0.1.80.tgz#45196463b27233fbbab0043b84d5e1748a352261"
+  integrity sha512-jgDDHZvWg3242zGwwlw9zx/tjMZEIjzef77T68p6BYSIlqEh8Xmla7rYO7QqaxsSdhs9QcJLLrWiAzOT2bkPYg==
 
-"@cargo-messages/win32-x64-msvc@0.1.67":
-  version "0.1.67"
-  resolved "https://registry.yarnpkg.com/@cargo-messages/win32-x64-msvc/-/win32-x64-msvc-0.1.67.tgz#c7c92c4bb7c4e7c9f0393d1bba04b6eae305adbc"
-  integrity sha512-ASs8v5cWzbyDU+OsMHRmkOMy0IW+ZRMWyLvbanTp68cDsInyPbQc0JMAcMY1GIMKhCZCUmg3ClJt5I+ytUxTUg==
+"@cargo-messages/linux-x64-gnu@0.1.80":
+  version "0.1.80"
+  resolved "https://registry.yarnpkg.com/@cargo-messages/linux-x64-gnu/-/linux-x64-gnu-0.1.80.tgz#aecffef535a6b26827bc3a9ba6fb7db7603772a7"
+  integrity sha512-Ku5OyfoxBdcQ7tYUyL7iBCZ46l7Tl0MDAmf9V/7D4K/NLIg02ducK1wrCQ+MaUAJu2pxu7gTgfR6SGeZtQOYoA==
+
+"@cargo-messages/linux-x64-musl@0.1.80":
+  version "0.1.80"
+  resolved "https://registry.yarnpkg.com/@cargo-messages/linux-x64-musl/-/linux-x64-musl-0.1.80.tgz#96b5d807c2d39ca672d9d40f3c4e1dbb05c210a4"
+  integrity sha512-/e5oQ6kSzEjdfzznqsMOtgqMc01MWYGI0yEn1iMwgB8K+cN9ma/sTXMVpKw7PRov2lQWCuSIhG3WZeF+PmloGA==
+
+"@cargo-messages/win32-arm64-msvc@0.1.80":
+  version "0.1.80"
+  resolved "https://registry.yarnpkg.com/@cargo-messages/win32-arm64-msvc/-/win32-arm64-msvc-0.1.80.tgz#81ef880bf425355190c6351eb45835f9ba548f70"
+  integrity sha512-8f8skn92zZDhZ74nh1ODp9eqV1XsGPlHITny+BQ+pOls0b62G39ECIkcdlGVeG0qBrR+8aJ6Tnr8KjqZXv7kwQ==
+
+"@cargo-messages/win32-x64-msvc@0.1.80":
+  version "0.1.80"
+  resolved "https://registry.yarnpkg.com/@cargo-messages/win32-x64-msvc/-/win32-x64-msvc-0.1.80.tgz#6527963da64ef30cba0bcbcdc7fedc89df8cc6b3"
+  integrity sha512-L6sM4HDOM09egXhyYhb1X9/IJZ056HHSfmEHCnnLw0NN5eotOhQS/Mp2rBmttMs6OAPjci4ugrNnTQcqzVd0BQ==
 
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"
@@ -1272,18 +1287,21 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@neon-rs/cli@0.1.68":
-  version "0.1.68"
-  resolved "https://registry.yarnpkg.com/@neon-rs/cli/-/cli-0.1.68.tgz#2907698e67792bf1dc638cc708a1386a73dadd4e"
-  integrity sha512-K3U/DUC7oxBKAGfU3P6tDW8K2ir39Peqaeyrgm+xRxJ2sRuYp/PzbJNuYnjOA/7GWGYt/xDOeEdh6QOV1PGRTg==
+"@neon-rs/cli@0.1.81":
+  version "0.1.81"
+  resolved "https://registry.yarnpkg.com/@neon-rs/cli/-/cli-0.1.81.tgz#7878df334cdbbb44d7a976480faa76f084a00abb"
+  integrity sha512-7mfLsXjXBEypMn+AxdIkCGJNdX2i9NWbeZgLKdOUcFrEnvQAAcx8pjtouxL3a/AFKYRu4QKucnFO3G+07aydtg==
   optionalDependencies:
-    "@cargo-messages/android-arm-eabi" "0.1.67"
-    "@cargo-messages/darwin-arm64" "0.1.67"
-    "@cargo-messages/darwin-x64" "0.1.67"
-    "@cargo-messages/linux-arm-gnueabihf" "0.1.67"
-    "@cargo-messages/linux-x64-gnu" "0.1.67"
-    "@cargo-messages/win32-arm64-msvc" "0.1.67"
-    "@cargo-messages/win32-x64-msvc" "0.1.67"
+    "@cargo-messages/android-arm-eabi" "0.1.80"
+    "@cargo-messages/darwin-arm64" "0.1.80"
+    "@cargo-messages/darwin-x64" "0.1.80"
+    "@cargo-messages/linux-arm-gnueabihf" "0.1.80"
+    "@cargo-messages/linux-arm64-gnu" "0.1.80"
+    "@cargo-messages/linux-arm64-musl" "0.1.80"
+    "@cargo-messages/linux-x64-gnu" "0.1.80"
+    "@cargo-messages/linux-x64-musl" "0.1.80"
+    "@cargo-messages/win32-arm64-msvc" "0.1.80"
+    "@cargo-messages/win32-x64-msvc" "0.1.80"
 
 "@sinclair/typebox@^0.27.8":
   version "0.27.8"
