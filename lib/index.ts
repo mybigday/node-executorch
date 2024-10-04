@@ -170,4 +170,33 @@ class Module {
   }
 }
 
-export { Tensor, Module };
+class Sampler {
+  _ptr: ExternalObject;
+  _vocab_size: number;
+
+  constructor(vocab_size: number, temperature: number = 0.7, topP: number = 0.9, seed?: number) {
+    this._vocab_size = vocab_size;
+    this._ptr = mod.createSampler(
+      vocab_size,
+      temperature,
+      topP,
+      seed ?? Math.floor(Math.random() * 1000000)
+    );
+  }
+
+  sample(tensor: Tensor): number {
+    if (tensor.dtype !== "float32") {
+      throw new Error(`Unsupported dtype: ${tensor.dtype}`);
+    }
+    if (tensor.shape.length !== 3 || tensor.shape[0] !== 1 || tensor.shape[1] === 0 || tensor.shape[2] !== this._vocab_size) {
+      throw new Error(`Invalid shape: ${tensor.shape}`);
+    }
+    return mod.samplerSample(this._ptr, tensor._ptr);
+  }
+
+  dispose() {
+    delete this._ptr;
+  }
+}
+
+export { Sampler, Tensor, Module };

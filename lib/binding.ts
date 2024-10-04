@@ -7,6 +7,9 @@ interface Binding {
   moduleExecute(ptr: ExternalObject, method_name: string, inputs: InternalEValue[]): Promise<InternalEValue[]>;
   moduleGetMethodMeta(ptr: ExternalObject, method_name: string): MethodMeta;
   moduleMethodNames(ptr: ExternalObject): string[];
+  // sampler methods
+  createSampler(vocab_size: number, temperature: number, top_p: number, seed: number): ExternalObject;
+  samplerSample(ptr: ExternalObject, tensor: ExternalObject): number;
   // tensor methods
   createTensor(dtype: DType, shape: number[], data: ArrayBuffer): ExternalObject;
   tensorGetDtype(ptr: ExternalObject): DType;

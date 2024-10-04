@@ -1,5 +1,5 @@
 import path from "path";
-import { Module, Tensor, EValueTag, DType } from "./index";
+import { Module, Tensor, Sampler, EValueTag, DType } from "./index";
 
 const model = path.resolve(__dirname, "__fixtures__/mul.pte");
 
@@ -52,4 +52,14 @@ it("Tensor", async () => {
   expect(reshaped.dtype).toBe("float32");
   expect(reshaped.shape).toEqual([2, 3]);
   expect(reshaped.data).toMatchSnapshot();
+});
+
+it("Sampler", async () => {
+  const mockTensor = new Tensor("float32", [1, 2, 10], Float32Array.from({ length: 20 }, (_, i) => i));
+  const sampler = new Sampler(10);
+
+  // sample
+  const sample = sampler.sample(mockTensor);
+  expect(sample).toBeGreaterThanOrEqual(0);
+  expect(sample).toBeLessThanOrEqual(10);
 });
