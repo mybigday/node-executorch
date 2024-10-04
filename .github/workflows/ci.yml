@@ -41,7 +41,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: executorch/cmake-out
-        key: ${{ runner.os }}-cmake-${{ hashFiles('executorch/{kernels,extension,backends,runtime}/**/*.cpp') }}
+        key: ${{ runner.os }}-cmake-${{ hashFiles('build.rs') }}
     - name: Build executorch
       run: |
         python -m venv .venv
