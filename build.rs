@@ -75,7 +75,9 @@ fn main() {
     );
 
     assert!(link_lib(&lib_path, "executorch", false).is_ok());
-    assert!(link_lib(&lib_path, "executorch_no_prim_ops", false).is_ok());
+    if !link_lib(&lib_path, "executorch_no_prim_ops", false).is_ok() {
+        assert!(link_lib(&lib_path, "executorch_core", false).is_ok());
+    }
     if !link_lib(&lib_path, "extension_module_static", false).is_ok() {
         assert!(link_lib(&lib_path, "extension_module", false).is_ok());
     }
