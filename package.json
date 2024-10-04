@@ -50,8 +50,7 @@
   },
   "homepage": "https://github.com/mybigday/node-executorch#readme",
   "files": [
-    "lib/*.js",
-    "lib/*.ts",
+    "lib",
     "bin"
   ],
   "jest": {
