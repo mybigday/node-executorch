@@ -1,6 +1,7 @@
 [package]
 name = "node-executorch"
-version = "0.1.0-alpha.1"
+version = "0.0.0"
+publish = false
 description = "Node.js binding for ExecuTorch"
 authors = ["Hans <hans.chen@bricks.tools>"]
 license = "BSD-3-Clause"
