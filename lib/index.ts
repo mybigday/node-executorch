@@ -134,7 +134,7 @@ class Module {
     this._ptr = ptr;
   }
 
-  static async load(path: string, load_mode: ModuleLoadMode = ModuleLoadMode.MmapUseMlock): Promise<Module> {
+  static async load(path: string, load_mode: ModuleLoadMode = ModuleLoadMode.Mmap): Promise<Module> {
     const ptr = await mod.moduleLoad(path, load_mode);
     return new Module(ptr);
   }
