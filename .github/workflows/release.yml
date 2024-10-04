@@ -148,6 +148,7 @@ jobs:
             -DEXECUTORCH_BUILD_XNNPACK=ON \
             -DEXECUTORCH_BUILD_PTHREADPOOL=ON \
             -DEXECUTORCH_BUILD_SDK=ON \
+            -DEXECUTORCH_ENABLE_LOGGING=ON \
             $EXTRA_CMAKE_ARGS
           cmake --build cmake-out --target install --config Release -j$(nproc)
         fi
