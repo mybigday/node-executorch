@@ -9,3 +9,5 @@ cargo.log
 cross.log
 lib/*.js
 bin/**/*
+.venv
+/qairt
