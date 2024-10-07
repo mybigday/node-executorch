@@ -1,6 +1,6 @@
 extern crate cpp_build;
-use std::path::Path;
 use std::fs;
+use std::path::Path;
 
 fn link_shared(lib: &str) {
     println!("cargo:rustc-link-lib=dylib={}", lib);
@@ -32,7 +32,10 @@ fn main() {
     };
 
     let install_path = cmake::build(".");
-    println!("cargo:rustc-link-search=native={}/lib", install_path.display());
+    println!(
+        "cargo:rustc-link-search=native={}/lib",
+        install_path.display()
+    );
 
     if node_platform == "win32" {
         link("c++");
@@ -90,12 +93,17 @@ fn main() {
         }
 
         // QNN
-        if node_platform == "win32" && node_arch == "arm64" && std::env::var("QNN_SDK_ROOT").is_ok() {
+        if node_platform == "win32" && node_arch == "arm64" && std::env::var("QNN_SDK_ROOT").is_ok()
+        {
             println!("cargo:rerun-if-env-changed=QNN_SDK_ROOT");
             link_shared("qnn_executorch_backend");
             let src = Path::new(&install_path).join("lib/qnn_executorch_backend.dll");
             let out_dir = std::env::var("OUT_DIR").unwrap_or_else(|_| ".".to_string());
-            let dst = Path::new(&out_dir).join("bin").join(node_platform).join(node_arch).join("qnn_executorch_backend.dll");
+            let dst = Path::new(&out_dir)
+                .join("bin")
+                .join(node_platform)
+                .join(node_arch)
+                .join("qnn_executorch_backend.dll");
             fs::copy(src, dst).unwrap();
         }
     }
