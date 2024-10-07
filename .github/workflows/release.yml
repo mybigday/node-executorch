@@ -125,30 +125,32 @@ jobs:
           if [[ "$PLATFORM" == "windows" ]]; then
             EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/mingw-w64-${ARCH}.clang.toolchain.cmake"
             if [[ "$ARCH" == "aarch64" ]]; then
-              EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_QNN=ON"
+              EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_QNN=ON -DQNN_SDK_ROOT=$QNN_SDK_ROOT"
             fi
           elif [[ "$PLATFORM" == "macos" ]]; then
             EXTRA_CMAKE_ARGS="-DEXECUTORCH_BUILD_COREML=ON -DCMAKE_OSX_ARCHITECTURES=${ARCH}"
           elif [[ "$PLATFORM" == "linux" ]] && [[ "$ARCH" == "aarch64" ]]; then
             EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.gcc.toolchain.cmake"
           fi
+          if [[ "$ARCH" == "aarch64" ]]; then
+            EXTRA_CMAKE_ARGS="$EXTRA_CMAKE_ARGS -DEXECUTORCH_XNNPACK_ENABLE_KLEIDI=ON"
+          fi
           cmake \
             -S . \
             -B cmake-out \
+            -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=cmake-out \
-            -DEXECUTORCH_BUILD_XNNPACK=ON \
+            -DEXECUTORCH_ENABLE_LOGGING=ON \
             -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON \
             -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON \
             -DEXECUTORCH_BUILD_KERNELS_CUSTOM=ON \
             -DEXECUTORCH_BUILD_KERNELS_QUANTIZED=ON \
             -DEXECUTORCH_BUILD_KERNELS_OPTIMIZED=ON \
             -DEXECUTORCH_BUILD_EXTENSION_TENSOR=ON \
-            -DQNN_SDK_ROOT=$QNN_SDK_ROOT \
+            -DEXECUTORCH_BUILD_PTHREADPOOL=ON \
             -DEXECUTORCH_BUILD_CPUINFO=ON \
             -DEXECUTORCH_BUILD_XNNPACK=ON \
-            -DEXECUTORCH_BUILD_PTHREADPOOL=ON \
-            -DEXECUTORCH_BUILD_SDK=ON \
-            -DEXECUTORCH_ENABLE_LOGGING=ON \
+            -DEXECUTORCH_XNNPACK_SHARED_WORKSPACE=ON \
             $EXTRA_CMAKE_ARGS
           cmake --build cmake-out --target install --config Release -j$(nproc)
         fi
