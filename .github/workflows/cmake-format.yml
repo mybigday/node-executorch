@@ -20,4 +20,4 @@ jobs:
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
         commit_user_name: cmake-format-bot
-        commit_message: 'Automated commit of cmake-format changes.'
+        commit_message: 'chore: automated commit of cmake-format changes.'
