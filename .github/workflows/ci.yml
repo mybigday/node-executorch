@@ -43,7 +43,7 @@ jobs:
       run: |
         python3 -m venv .venv
         source .venv/bin/activate
-        ./executorch/install_dependencies.sh
+        ./executorch/install_requirements.sh
         echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
         echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
     - name: Install dependencies
