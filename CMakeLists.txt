@@ -103,11 +103,11 @@ add_subdirectory(executorch/extension/llm/third-party/abseil-cpp)
 add_subdirectory(executorch/extension/llm/third-party/re2)
 add_subdirectory(executorch/extension/llm/third-party/sentencepiece)
 
-file(GLOB_RECURSE TOKENIZER_SRCS
+file(GLOB TOKENIZER_SRCS
   executorch/extension/llm/tokenizer/bpe_tokenizer.cpp
   executorch/extension/llm/tokenizer/tiktoken.cpp
 )
-file(GLOB_RECURSE TOKENIZER_HDRS
+file(GLOB TOKENIZER_HDRS
   executorch/extension/llm/tokenizer/*.h
 )
 add_library(tokenizer STATIC
@@ -123,6 +123,28 @@ target_link_libraries(tokenizer PUBLIC re2::re2 sentencepiece-static)
 
 install(
   TARGETS tokenizer
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+# SAMPLER
+
+file(GLOB SAMPLER_SRCS
+  executorch/extension/llm/sampler/sampler.cpp
+)
+file(GLOB SAMPLER_HDRS
+  executorch/extension/llm/sampler/sampler.h
+)
+add_library(sampler STATIC
+  ${SAMPLER_SRCS}
+  ${SAMPLER_HDRS}
+)
+target_include_directories(sampler PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(sampler PUBLIC tokenizer)
+
+install(
+  TARGETS sampler
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

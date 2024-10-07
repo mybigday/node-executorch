@@ -46,6 +46,7 @@ fn main() {
     link("extension_module_static");
     link("extension_data_loader");
     link("tokenizer");
+    link("sampler");
 
     // XNNPACK
     link_whole("xnnpack_backend");
