@@ -19,6 +19,8 @@ jobs:
       with:
         toolchain: nightly
         target: x86_64-unknown-linux-gnu
+    - name: Rust cache
+      uses: Swatinem/rust-cache@v2
     - name: Use Node.js 20.x
       uses: actions/setup-node@v4
       with:
@@ -37,33 +39,16 @@ jobs:
       with:
         path: .venv
         key: ${{ runner.os }}-venv-3_10
-    - name: Cached build
-      uses: actions/cache@v2
-      with:
-        path: executorch/cmake-out
-        key: ${{ runner.os }}-cmake-${{ hashFiles('build.rs', 'executorch/version.txt') }}
-    - name: Build executorch
+    - name: Install python dependencies
       run: |
-        python -m venv .venv
+        python3 -m venv .venv
         source .venv/bin/activate
-        cd executorch
-        pip install tomli zstd setuptools wheel
-        pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
-        if [ ! -d cmake-out ]; then
-          ./install_requirements.sh
-          cmake \
-            -S . \
-            -B cmake-out \
-            -DCMAKE_INSTALL_PREFIX=cmake-out \
-            -DEXECUTORCH_BUILD_XNNPACK=ON \
-            -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON \
-            -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON \
-            -DEXECUTORCH_ENABLE_LOGGING=ON
-          cmake --build cmake-out --target install --config Release
-        fi
+        ./executorch/install_dependencies.sh
+        echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
     - name: Install dependencies
       run: yarn install
-    - name: Build
-      run: yarn build
+    - name: Minimal Build
+      run: yarn debug
     - name: Run tests
       run: yarn test-all

@@ -12,12 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "build-target"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "832133bbabbbaa9fbdba793456a2827627a7d2b8fb96032fa1e7666d7895832b"
-
-[[package]]
 name = "byteorder"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -154,7 +148,6 @@ dependencies = [
 name = "node-executorch"
 version = "0.0.0"
 dependencies = [
- "build-target",
  "cc",
  "cmake",
  "cpp",
@@ -162,7 +155,6 @@ dependencies = [
  "cpp_macros",
  "libc",
  "neon",
- "project-root",
 ]
 
 [[package]]
@@ -179,12 +171,6 @@ checksum = "5e719e8df665df0d1c8fbfd238015744736151d4445ec0836b8e628aae103b77"
 dependencies = [
  "unicode-ident",
 ]
-
-[[package]]
-name = "project-root"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bccbff07d5ed689c4087d20d7307a52ab6141edeedf487c3876a55b86cf63df"
 
 [[package]]
 name = "quote"
