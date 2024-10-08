@@ -105,59 +105,16 @@ jobs:
         rm llvm-mingw.tar.xz
         MINGW_PATH=$(realpath llvm-mingw-*)
         echo "PATH=$MINGW_PATH/bin:$PATH" >> $GITHUB_ENV
-    - name: Build executorch
-      shell: bash
-      env:
-        PLATFORM: ${{ matrix.plat }}
-        ARCH: ${{ matrix.arch }}
+    - name: Install python dependencies
       run: |
         python3 -m venv .venv
         source .venv/bin/activate
-        cd executorch
-        cd backends/xnnpack/third-party/cpuinfo/
-        patch -p1 -i ${{ github.workspace }}/scripts/cpuinfo.patch
-        cd ${{ github.workspace }}/executorch
-        pip install tomli zstd setuptools wheel
-        pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
-        if [ ! -d cmake-out ]; then
-          ./install_requirements.sh
-          EXTRA_CMAKE_ARGS=""
-          if [[ "$PLATFORM" == "windows" ]]; then
-            EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/mingw-w64-${ARCH}.clang.toolchain.cmake"
-            if [[ "$ARCH" == "aarch64" ]]; then
-              EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DEXECUTORCH_BUILD_QNN=ON -DQNN_SDK_ROOT=$QNN_SDK_ROOT"
-            fi
-          elif [[ "$PLATFORM" == "macos" ]]; then
-            EXTRA_CMAKE_ARGS="-DEXECUTORCH_BUILD_COREML=ON -DCMAKE_OSX_ARCHITECTURES=${ARCH}"
-          elif [[ "$PLATFORM" == "linux" ]] && [[ "$ARCH" == "aarch64" ]]; then
-            EXTRA_CMAKE_ARGS="-DCMAKE_TOOLCHAIN_FILE=../cmake/aarch64-linux-gnu.gcc.toolchain.cmake"
-          fi
-          if [[ "$ARCH" == "aarch64" ]]; then
-            EXTRA_CMAKE_ARGS="$EXTRA_CMAKE_ARGS -DEXECUTORCH_XNNPACK_ENABLE_KLEIDI=ON"
-          fi
-          cmake \
-            -S . \
-            -B cmake-out \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=cmake-out \
-            -DEXECUTORCH_ENABLE_LOGGING=ON \
-            -DEXECUTORCH_BUILD_EXTENSION_DATA_LOADER=ON \
-            -DEXECUTORCH_BUILD_EXTENSION_MODULE=ON \
-            -DEXECUTORCH_BUILD_KERNELS_CUSTOM=ON \
-            -DEXECUTORCH_BUILD_KERNELS_QUANTIZED=ON \
-            -DEXECUTORCH_BUILD_KERNELS_OPTIMIZED=ON \
-            -DEXECUTORCH_BUILD_EXTENSION_TENSOR=ON \
-            -DEXECUTORCH_BUILD_PTHREADPOOL=ON \
-            -DEXECUTORCH_BUILD_CPUINFO=ON \
-            -DEXECUTORCH_BUILD_XNNPACK=ON \
-            -DEXECUTORCH_XNNPACK_SHARED_WORKSPACE=ON \
-            $EXTRA_CMAKE_ARGS
-          cmake --build cmake-out --target install --config Release -j$(nproc)
-        fi
+        ./executorch/install_requirements.sh
+        echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
     - name: Install dependencies
       run: yarn install
     - name: Build
-      shell: bash
       run: yarn build --target ${{ matrix.target }}
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -192,11 +149,3 @@ jobs:
       uses: JS-DevTools/npm-publish@v3
       with:
         token: ${{ secrets.NPM_TOKEN }}
-    - name: Draft release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN  }}
-      with:
-        tag_name: ${{ github.ref  }}
-        release_name: ${{ github.ref  }}
-        draft: true

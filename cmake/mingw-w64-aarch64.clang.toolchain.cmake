@@ -11,5 +11,5 @@ set(CMAKE_LINKER aarch64-w64-mingw32-ld)
 
 set(arch_c_flags "-march=armv8.7-a")
 
-set( CMAKE_C_FLAGS_INIT   "${arch_c_flags}" )
-set( CMAKE_CXX_FLAGS_INIT "${arch_c_flags}" )
+set(CMAKE_C_FLAGS_INIT "${arch_c_flags}")
+set(CMAKE_CXX_FLAGS_INIT "${arch_c_flags}")
