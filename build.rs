@@ -87,9 +87,9 @@ fn main() {
         if node_platform == "darwin" {
             link_whole("coremldelegate");
             link("sqlite3");
-            println!("cargo:rustc-link-arg=-framework Foundation");
-            println!("cargo:rustc-link-arg=-framework CoreML");
-            println!("cargo:rustc-link-arg=-framework Accelerate");
+            println!("cargo:rustc-link-lib=framework=Foundation");
+            println!("cargo:rustc-link-lib=framework=CoreML");
+            println!("cargo:rustc-link-lib=framework=Accelerate");
         }
 
         // QNN
