@@ -7,7 +7,6 @@ use neon::types::Finalize;
 
 cpp! {{
   #include <executorch/extension/llm/sampler/sampler.h>
-  #include <executorch/extension/llm/sampler/sampler.cpp>
 }}
 
 cpp_class!(pub unsafe struct Sampler as "torch::executor::Sampler");
